@@ -1,0 +1,158 @@
+﻿@{
+    ViewBag.Title = "Image Gallery";
+    ViewBag.PageTitle = "📚 Books 📚";
+    Layout = "~/Views/Shared/_Layout.cshtml";   // remove if you are using a shared layout
+}
+
+<div class="card academic-title-card">
+    <h4 class="mb-0 fw-bold text-center">
+        ACADEMIC YEAR 
+    </h4>
+</div>
+
+<br />
+
+<div class="row g-4 align-items-stretch">
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card year-card" data-year="1">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-calendar3 fs-1 text-primary mb-3"></i>
+                <h5>1st Year</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card year-card" data-year="2">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-calendar3 fs-1 text-success mb-3"></i>
+                <h5>2nd Year</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card year-card" data-year="3">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-calendar3 fs-1 text-warning mb-3"></i>
+                <h5>3rd Year</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card year-card" data-year="4">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-calendar3 fs-1 text-danger mb-3"></i>
+                <h5>4th Year</h5>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<hr class="my-4" />
+
+<div id="subjectContainer"></div>
+
+<!-- ===================== STYLES ===================== -->
+<style>
+
+    .academic-title-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Size control */
+        padding: 14px 20px;
+        width: 90%; /* responsive width */
+        max-width: 420px; /* won't exceed 420px */
+        margin: 1px auto; /* centers the card horizontally */
+        min-height: auto;
+        /* Visuals */
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1.5px solid #dbeafe;
+        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
+        user-select: none; /* Prevent text selection */
+        outline: none; /* Remove focus caret */
+    }
+
+    .year-card {
+        cursor: pointer;
+        border-radius: 24px;
+        border: 1.8px solid #dbeafe;
+        background: #ffffff;
+        min-height: 500px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.35s ease;
+        user-select: none; /* Prevent text selection */
+        outline: none; /* Remove focus caret */
+    }
+
+    .year1 {
+        position: page;
+
+        .academic-title-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Size control */
+            padding: 14px 20px;
+            min-height: auto;
+            /* Visuals */
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1.5px solid #dbeafe;
+            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
+        }
+    }
+
+    .year-card h5 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .year-card:hover {
+        background: linear-gradient(135deg, #eef2ff, #ffffff);
+        transform: translateY(-10px);
+        box-shadow: 0 16px 35px rgba(79, 70, 229, 0.28);
+    }
+
+    .year-card:active {
+        transform: scale(0.98);
+    }
+</style>
+
+<!-- ===================== SCRIPT ===================== -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    $(".year-card").click(function () {
+        let year = $(this).data("year");
+
+        let redirectUrl = "";
+        switch (year) {
+            case 1:
+                redirectUrl = '@Url.Action("Year1", "Books")';
+                break;
+            case 2:
+                redirectUrl = '@Url.Action("Year2Subjects", "Home")';
+                break;
+            case 3:
+                redirectUrl = '@Url.Action("Year3Subjects", "Home")';
+                break;
+            case 4:
+                redirectUrl = '@Url.Action("Year4Subjects", "Home")';
+                break;
+        }
+
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        }
+    });
+</script>
+

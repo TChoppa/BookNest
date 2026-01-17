@@ -1,0 +1,12 @@
+﻿using BookNest.Models;
+
+namespace BookNest.Interfaces
+{
+    public interface IUserRepository
+    {
+        
+        public Task<User?> GetUserByEmail(string email);
+        public Task<User?> GetUserByEmailPassword(string email, string password);
+        public  Task<bool> AddUser(User user);
+    }
+}

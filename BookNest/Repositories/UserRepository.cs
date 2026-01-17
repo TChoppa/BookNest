@@ -1,0 +1,32 @@
+﻿using BookNest.DatabaseContext;
+using BookNest.DTO;
+using BookNest.Interfaces;
+using BookNest.Models;
+using System.Globalization;
+
+namespace BookNest.Repositories
+{
+    public class UserRepository : IUserRepository
+    {
+        private readonly AppDbContext _dbContext;
+        public UserRepository(AppDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<User?> GetUserByEmail(string email)
+        {
+            return _dbContext.users.Where(x => x.Email == email).FirstOrDefault();
+        }
+        public async Task<User?> GetUserByEmailPassword(string usernameEmail, string password)
+        {
+            return _dbContext.users.Where(x => (x.Username == usernameEmail && x.Password == password) || (x.Email == usernameEmail && x.Password == password)).FirstOrDefault();
+        }
+        public async Task<bool> AddUser(User user)
+        {
+             _dbContext.users.Add(user);
+             _dbContext.SaveChanges();
+            return true;
+        }
+    }
+}

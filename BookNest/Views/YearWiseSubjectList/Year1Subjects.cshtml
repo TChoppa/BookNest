@@ -1,0 +1,94 @@
+﻿@{
+    ViewBag.Title = "Image Gallery";
+    Layout = "~/Views/Shared/_Layout.cshtml";   // remove if you are using a shared layout
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Image Gallery</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Bootstrap Icons (optional) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        .image-card {
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .image-card:hover {
+                transform: scale(1.03);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            .image-card img {
+                height: 180px;
+                object-fit: cover;
+            }
+    </style>
+</head>
+
+<body>
+
+    <div class="container mt-5">
+
+        <h3 class="text-center mb-4">📷 Image Gallery</h3>
+
+        <!-- ROW -->
+        <div class="row g-4" id="imageRow">
+            <!-- Cards will be added here by jQuery -->
+        </div>
+
+    </div>
+
+    <script>
+        $(document).ready(function () {
+
+            // Image list (12 images = 3 rows × 4 cards)
+            var images = [
+                { src: "/images/img1.jpg", title: "Image 1" },
+                { src: "/images/img2.jpg", title: "Image 2" },
+                { src: "/images/img3.jpg", title: "Image 3" },
+                { src: "/images/img4.jpg", title: "Image 4" },
+                { src: "/images/img5.jpg", title: "Image 5" },
+                { src: "/images/img6.jpg", title: "Image 6" },
+                { src: "/images/img7.jpg", title: "Image 7" },
+                { src: "/images/img8.jpg", title: "Image 8" },
+                { src: "/images/img9.jpg", title: "Image 9" },
+                { src: "/images/img10.jpg", title: "Image 10" },
+                { src: "/images/img11.jpg", title: "Image 11" },
+                { src: "/images/img12.jpg", title: "Image 12" }
+            ];
+
+            var html = "";
+
+            $.each(images, function (index, img) {
+                html += `
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <div class="card h-100 image-card">
+                            <img src="${img.src}" class="card-img-top" alt="${img.title}">
+                            <div class="card-body text-center">
+                                <h6 class="mb-0">${img.title}</h6>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            $("#imageRow").html(html);
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
