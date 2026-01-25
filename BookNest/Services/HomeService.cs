@@ -58,5 +58,33 @@ namespace BookNest.Services
                 return false;
             }
         }
+
+        public async Task<int> EditPasssword(ForgetPassword dto)
+        {
+            try
+            {
+               
+                if(dto.NewPassword != dto.ConfirmPassword)
+                {
+                    return 1;
+                }
+                var user = await _repo.GetUserByEmailUsername(dto.UserNameEmail);
+                if (user == null)
+                {
+                    return 2;
+                }                
+                var isPasswordChange = await _repo.EditPasssword(user.Username, dto.NewPassword);
+                if (isPasswordChange)
+                    return 3;
+
+                return 0 ;
+
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
+                return 0;
+            }
+        }
     }
 }

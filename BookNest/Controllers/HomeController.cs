@@ -50,7 +50,7 @@ namespace BookNest.Controllers
         }
         [HttpPost]
         public async Task<IActionResult> Login(LoginDTO dto)
-        {
+            {
             ViewBag.PageTitle = "Login";
             if (dto == null)
                 return Unauthorized(new { success = false, message = "Invalid user" });
@@ -60,12 +60,28 @@ namespace BookNest.Controllers
 
             return Json(new { success = false, message = "Invalid Credentials " });
         }
+        [HttpGet]
         public IActionResult ForgetPassword()
         {
             ViewBag.PageTitle = "ForgetPassword";
             return View();
         }
-
+        [HttpPost]
+        public async Task<IActionResult> ForgetPassword(ForgetPassword dto)
+        {
+            ViewBag.PageTitle = "ForgetPassword";
+            if (dto == null)
+                return Unauthorized(new { success = false, message = "Invalid user" });
+            var isPasswordChange = await _HomeService.EditPasssword(dto);
+            switch(isPasswordChange)
+            {
+                case 0: return Json(new { success = false, message = "Error While Changing Password" });
+                case 1: return Json(new { success = false, message = "Both Password Should be Same" });
+                case 2: return Json(new { success = false, message = "Invalid Credentials" });
+                case 3: return Json(new { success = true, message = "Password Changed Successfully" });
+            }           
+            return Json(new { success = false, message = "Invalid Credentials " });
+        }
         public IActionResult Privacy()
         {
             return View();

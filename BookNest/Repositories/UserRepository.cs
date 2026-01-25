@@ -18,6 +18,21 @@ namespace BookNest.Repositories
         {
             return _dbContext.users.Where(x => x.Email == email).FirstOrDefault();
         }
+        public async Task<User?> GetUserByEmailUsername(string usernameEmail)
+        {
+            return _dbContext.users.Where(x => x.Email == usernameEmail || x.Username == usernameEmail).FirstOrDefault();
+        }
+        public async Task<bool> EditPasssword(string usernameEmail , string Password)
+        {
+            var user = _dbContext.users.Where(x => x.Email == usernameEmail || x.Username == usernameEmail).FirstOrDefault();
+            if(user==null)
+                return false;
+            user.Password = Password;
+            _dbContext.SaveChanges();
+            return true;
+
+        }
+
         public async Task<User?> GetUserByEmailPassword(string usernameEmail, string password)
         {
             return _dbContext.users.Where(x => (x.Username == usernameEmail && x.Password == password) || (x.Email == usernameEmail && x.Password == password)).FirstOrDefault();

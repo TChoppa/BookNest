@@ -11,8 +11,11 @@
             }
             public DbSet<User> users { get; set; }
             public DbSet<RoleMaster> RoleMasters { get; set; }
+            public DbSet<Book> Books { get; set; }
+            public DbSet<Cart> CartList { get; set; }
 
-            protected override void OnModelCreating(ModelBuilder modelBuilder)
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
             {
                 base.OnModelCreating(modelBuilder); // always keep this
 

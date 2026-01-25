@@ -16,6 +16,10 @@ namespace BookNest
             builder.Services.AddControllersWithViews();
             builder.Services.AddScoped<IHome, HomeService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped< BookService>();
+            builder.Services.AddScoped<IBookRepository, BookRepository>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
+            builder.Services.AddScoped<CartService>();
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -38,7 +42,7 @@ namespace BookNest
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Login}/{id?}");
+                pattern: "{controller=Books}/{action=Year1}/{id?}");
 
             app.Run();
         }
