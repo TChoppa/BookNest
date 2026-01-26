@@ -1,5 +1,6 @@
 ﻿using BookNest.DTO;
 using BookNest.Interfaces;
+using BookNest.Models;
 
 namespace BookNest.Services
 {
@@ -10,7 +11,10 @@ namespace BookNest.Services
         {
             _cartRepo = cartRepo;
         }
-
+        public async Task<List<Cart>> GetCartList()
+        {
+            return await _cartRepo.GetCartLists();
+        }
         public Task<int> AddToCart(CartDTO cartDTO)
         {
             return _cartRepo.AddToCart(cartDTO);

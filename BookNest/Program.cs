@@ -22,9 +22,10 @@ namespace BookNest
             builder.Services.AddScoped<CartService>();
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddSession();
 
             var app = builder.Build();
-
+            app.UseSession();
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -42,7 +43,7 @@ namespace BookNest
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Books}/{action=Year1}/{id?}");
+                pattern: "{controller=Home}/{action=Login}/{id?}");
 
             app.Run();
         }

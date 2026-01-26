@@ -2,6 +2,7 @@
 using BookNest.DTO;
 using BookNest.Interfaces;
 using BookNest.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookNest.Repositories
 {
@@ -11,6 +12,10 @@ namespace BookNest.Repositories
         public CartRepository(AppDbContext dbContext)
         {
             _dbContext = dbContext;
+        }
+        public async Task<List<Cart>> GetCartLists()
+        {
+            return await _dbContext.CartList.ToListAsync();
         }
 
         public async Task<int> AddToCart(CartDTO cartDTO)

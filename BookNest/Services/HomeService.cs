@@ -14,6 +14,7 @@ namespace BookNest.Services
 
         public async Task<bool> Register(RegisterDTO dto)
         {
+           
             try
             {           
                 var existingUser = await _repo.GetUserByEmail(dto.Email);
@@ -40,22 +41,22 @@ namespace BookNest.Services
             }
         }
 
-        public async Task<bool> Login (LoginDTO dto)
+        public async Task<User?> Login (LoginDTO dto)
         {
             try
             {
-                var isUserExists = await _repo.GetUserByEmailPassword(dto.UserNameEmail, dto.Password);
-                if (isUserExists != null)
+                var userDetails = await _repo.GetUserByUsernamePassword(dto.UserNameEmail, dto.Password);
+                if (userDetails == null)
                 {
-                    return true;
+                    return null;
                 }
-                return false;
+                return userDetails;
 
             }
             catch (Exception ex)
             {
                 Console.Write(ex.Message);
-                return false;
+                return null;
             }
         }
 
@@ -63,16 +64,16 @@ namespace BookNest.Services
         {
             try
             {
-               
-                if(dto.NewPassword != dto.ConfirmPassword)
-                {
-                    return 1;
-                }
                 var user = await _repo.GetUserByEmailUsername(dto.UserNameEmail);
                 if (user == null)
                 {
                     return 2;
-                }                
+                }
+                if (dto.NewPassword != dto.ConfirmPassword)
+                {
+                    return 1;
+                }
+                             
                 var isPasswordChange = await _repo.EditPasssword(user.Username, dto.NewPassword);
                 if (isPasswordChange)
                     return 3;

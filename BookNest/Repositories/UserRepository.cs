@@ -24,7 +24,7 @@ namespace BookNest.Repositories
         }
         public async Task<bool> EditPasssword(string usernameEmail , string Password)
         {
-            var user = _dbContext.users.Where(x => x.Email == usernameEmail || x.Username == usernameEmail).FirstOrDefault();
+            var user = _dbContext.users.Where(x => (x.Email == usernameEmail || x.Username == usernameEmail) && x.Password != Password).FirstOrDefault();
             if(user==null)
                 return false;
             user.Password = Password;
@@ -33,9 +33,9 @@ namespace BookNest.Repositories
 
         }
 
-        public async Task<User?> GetUserByEmailPassword(string usernameEmail, string password)
+        public async Task<User?> GetUserByUsernamePassword(string usernameEmail, string password)
         {
-            return _dbContext.users.Where(x => (x.Username == usernameEmail && x.Password == password) || (x.Email == usernameEmail && x.Password == password)).FirstOrDefault();
+            return _dbContext.users.Where(x => (x.Username == usernameEmail && x.Password == password)).FirstOrDefault();
         }
         public async Task<bool> AddUser(User user)
         {

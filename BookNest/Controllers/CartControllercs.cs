@@ -12,9 +12,10 @@ namespace BookNest.Controllers
         {
             _cartService= cartService;
         }
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var cartList = await _cartService.GetCartList();
+            return View(cartList);
         }
 
         [HttpPost]

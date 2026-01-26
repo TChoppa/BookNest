@@ -291,7 +291,7 @@
                                 $("#Password").val("")
                                 $("#UserRole").val("")
                                 alert(response.message);
-                                // window.location.href = '@Url.Action("Login", "Home")';
+                                window.location.href = response.redirectUrl;
                             } 
                             else {
                                 debugger;

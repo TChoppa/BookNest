@@ -1,0 +1,25 @@
+﻿@model IEnumerable<Cart>
+
+@foreach (var item in Model)
+{
+    <div class="card mb-3 shadow-sm">
+        <div class="row g-0 align-items-center">
+            <div class="col-md-2">
+                <img src="@item.ImageUrl" class="img-fluid rounded-start" alt="@item.ImageUrl">
+            </div>
+            <div class="col-md-7">
+                <div class="card-body">
+                    <h5 class="card-title">@item.Title</h5>
+                    <p class="card-text">@item.Year</p>
+                </div>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="d-flex justify-content-center align-items-center">
+                    <button class="btn btn-outline-success qty-minus" data-id="Id">−</button>
+                    <span class="qty-display">@item.AvailableQuantity</span>
+                    <button class="btn btn-outline-success qty-plus" data-id="Id">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

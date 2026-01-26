@@ -8,7 +8,7 @@ namespace BookNest.Interfaces
         public Task<User?> GetUserByEmail(string email);
         public Task<User?> GetUserByEmailUsername(string usernameEmail);
         public Task<bool> EditPasssword(string usernameEmail, string Password);
-        public Task<User?> GetUserByEmailPassword(string email, string password);
+        public Task<User?> GetUserByUsernamePassword(string email, string password);
         public  Task<bool> AddUser(User user);
     }
 }
