@@ -15,6 +15,10 @@ namespace BookNest.Models
             public int AvailableQuantity { get; set; }
 
             public string Year { get; set; } = string.Empty;
+            public string BranchCode { get; set; } = string.Empty;
+            public string BranchName { get; set; } = string.Empty;
+
+
 
 
 

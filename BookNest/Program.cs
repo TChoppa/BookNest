@@ -1,7 +1,8 @@
-using BookNest.DatabaseContext;
+﻿using BookNest.DatabaseContext;
 using BookNest.Interfaces;
 using BookNest.Repositories;
 using BookNest.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookNest
@@ -23,7 +24,15 @@ namespace BookNest
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddSession();
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Home/Login";
+                    options.AccessDeniedPath = "/Home/LogOut";
 
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // ⏱ 30 minutes
+                    options.SlidingExpiration = true;                  // 🔁 extend on activity
+                });
             var app = builder.Build();
             app.UseSession();
             // Configure the HTTP request pipeline.
@@ -38,7 +47,7 @@ namespace BookNest
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

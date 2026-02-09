@@ -1,10 +1,14 @@
 using BookNest.DTO;
 using BookNest.Interfaces;
 using BookNest.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Diagnostics;
-
+using System.Security.Claims;
+using BookNest.Enums;
 namespace BookNest.Controllers
 {
     public class HomeController : Controller
@@ -34,14 +38,30 @@ namespace BookNest.Controllers
         public async Task<IActionResult> Register(RegisterDTO dto)
         {
             ViewBag.PageTitle = "Register";
-           if(dto== null)
-                return    Unauthorized(new { success = false, message = "Invalid Credentials" });
-           var isUserRegister = await _HomeService.Register(dto);
-            if (isUserRegister)
-                return Json(new { success = true, message = "Registration Successful" , redirectUrl = Url.Action("Login", "Home") });
 
-            return Json(new { success = false, message = "Duplicate User " });
+            if (dto == null)
+                return BadRequest(new { success = false, message = "Invalid request data" });
+
+            try
+            {
+                var isNotUserRegister = await _HomeService.Register(dto);
+
+                if (isNotUserRegister)
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "Registration Successful",
+                        redirectUrl = Url.Action("Login", "Home")
+                    });
+
+                return Unauthorized(new { success = false, message = "Duplicate User" });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
         }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -53,10 +73,34 @@ namespace BookNest.Controllers
             {
             ViewBag.PageTitle = "Login";
             if (dto == null)
-                return Unauthorized(new { success = false, message = "Invalid user" });
+                return BadRequest(new { success = false, message = "Invalid user" });
             var userExists = await _HomeService.Login(dto);
             if(userExists==null)
-                return Json(new { success = false, message = "Invalid user" });
+                return Unauthorized (new { success = false, message = "User Not Exists" });
+            var userRole = await _HomeService.GetAllRoles(userExists.Fk_RoleId);
+            if (userRole==null)
+                return Unauthorized(new { success = false, message = "Invalid user" });
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, userExists.Username),
+                new Claim(ClaimTypes.Email, userExists.Email),
+                new Claim(ClaimTypes.Role, userRole.Name)
+            };
+            var identity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = false,
+                    ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
+                });
+
             HttpContext.Session.SetString("UserName", userExists.Username);
             string roleMessage = userExists.Fk_RoleId switch
             {             
@@ -66,7 +110,7 @@ namespace BookNest.Controllers
                 4 => "Login Admin successfully",
                 _ => "Login Successfullty"
             };
-            return Json(new { success = true, message = roleMessage, redirectUrl = Url.Action("Index", "CartControllercs") });
+            return Ok(new { success = true, message = roleMessage, redirectUrl = Url.Action("Index", "CartControllercs") });
         }
         [HttpGet]
         public IActionResult ForgetPassword()
@@ -79,27 +123,27 @@ namespace BookNest.Controllers
         {
             ViewBag.PageTitle = "ForgetPassword";
             if (dto == null)
-                return Unauthorized(new { success = false, message = "Invalid user" });
+                return BadRequest(new { success = false, message = "Invalid user" });
             var isPasswordChange = await _HomeService.EditPasssword(dto);
             var result = isPasswordChange switch
             {
-                0 => new { success = false, message = "Error While Changing Password" },
-                1 => new { success = false, message = "Both Password Should be Same" },
-                2 => new { success = false, message = "Invalid Credentials" },
-                3 => new { success = true, message = "Password Changed Successfully" },
+                PasswordChange.UnChanged => new { success = false, message = "Error While Changing Password" },
+                PasswordChange.PasswordMismatch => new { success = false, message = "Both Password Should be Same" },
+                PasswordChange.DuplicatePassword => new { success = false, message = "Previous Password is same" },
+                PasswordChange.Success => new { success = true, message = "Password Changed Successfully" },
                 _ => new { success = false, message = "Invalid Credentials" }
             };
 
-            return Json(result);
+            return Ok(result);
 
-            //switch (isPasswordChange)
-            //{
-            //    case 0: return Json(new { success = false, message = "Error While Changing Password" });
-            //    case 1: return Json(new { success = false, message = "Both Password Should be Same" });
-            //    case 2: return Json(new { success = false, message = "Invalid Credentials" });
-            //    case 3: return Json(new { success = true, message = "Password Changed Successfully" });
-            //}           
-            //return Json(new { success = true, message = pswdMessage });
+        }
+
+        public async Task<IActionResult> Dashboard()
+        {
+            var userName = HttpContext.Session.GetString("UserName");
+            var users = await _HomeService.GetUserByUsername(userName);
+            ViewBag.roleId = users.Fk_RoleId;
+            return View();
         }
         public IActionResult Privacy()
         {

@@ -31,7 +31,13 @@ namespace BookNest.Repositories
                 Year=cartDTO.Year
             };
              _dbContext.Add(cartItem);
+            var bookItems = _dbContext.Books.Where(x => x.BookId == cartDTO.BookId).FirstOrDefault();
+            if (bookItems == null)
+                return 0;
+            bookItems.AvailableQuantity--;
+            //_dbContext.SaveChanges();
             await _dbContext.SaveChangesAsync();
+            //IncreaseQtyByOne();
             isItemAdded = 1;
             return isItemAdded;
         }

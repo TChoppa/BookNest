@@ -20,10 +20,10 @@ namespace BookNest.Controllers
         {
             return View();
         }
-        [HttpGet]
-        public IActionResult GetYear1Books()
+        [HttpPost]
+        public IActionResult GetYear1Books(string branch , string year)
         {
-            var books = _bookService.GetYear1Books();
+            var books = _bookService.GetYear1Books(branch , year);
 
             return Json(books);
         }

@@ -307,9 +307,22 @@
 
                             }
                         },
-                        error: function () {
-                            alert("Error during registration.");
+                     error: function (xhr) {
+                        //let msg = "Something went wrong";
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;   // 👈 message from controller
                         }
+
+                        $("#msg")
+                            .removeClass("text-success")
+                            .addClass("text-danger")
+                            .text(msg)
+                            .fadeIn(200)
+                            .delay(3000)
+                            .fadeOut();
+                    }
+
                     });
                 });
         });

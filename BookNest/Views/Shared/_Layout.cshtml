@@ -41,6 +41,8 @@
             flex-direction: column;
             color: #fff;
             transition: left 0.3s ease;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         #Title {
@@ -163,7 +165,7 @@
 
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#">
+                    <a class="nav-link active" href="@Url.Action("Dashboard", "Home")">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
@@ -198,16 +200,42 @@
                             <a class="nav-link" href="#">Year 3</a>
                             <a class="nav-link" href="#">Year 4</a>
                         </div>
-
+                    
+                        @if (User.IsInRole("Faculty") || User.IsInRole("Librarian"))
+                        {
                         <a class="nav-link ms-3" id="journals"
                            href="@Url.Action("Journals", "Category")">Journals</a>
-
+                        }
+@* 
                         <a class="nav-link ms-3" id="ClubHost"
-                           href="@Url.Action("ClubHost", "Category")">ClubHost</a>
+                           href="@Url.Action("ClubHost", "Category")">ClubHost</a> *@
                     </div>
                 </li>
-
-                <li class="nav-item mt-4">
+                <li class="nav-item ">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-gear"></i> ClubHost
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-cart"></i>
+                        Cart
+                    </a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-gear"></i> Orders
+                    </a>
+                </li>
+                @if (User.IsInRole("Librarian"))
+                  {
+                <li class="nav-item ">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-gear"></i> OrdersList
+                    </a>
+                </li>
+                   }
+                <li class="nav-item mt-5">
                     <a class="nav-link" href="#">
                         <i class="bi bi-gear"></i> Settings
                     </a>
@@ -242,7 +270,9 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <script>
-              $(document).ready(function () {
+        $(document).ready(function () {
+            debugger;
+           var roleid = '@ViewBag.roleId';
             var $categoriesToggle = $('#categoriesToggle');
             var $catMenu = $('#catMenu');
 
@@ -250,9 +280,10 @@
             $('#menuToggle').on('click', function () {
                 $('#sidebar').toggleClass('show');
             });
-                    $('#year').on('click', function () {
-            window.location.href = '@Url.Action("Year1", "Books")';
-        });
+
+            $('#year').on('click', function () {
+                window.location.href = '@Url.Action("Year1", "Books")';
+            });
 
             /* Categories toggle */
             $categoriesToggle.on('click', function (e) {
@@ -263,11 +294,14 @@
                 localStorage.setItem("catMenuOpen", !isOpen);
             });
 
-            // Restore Categories menu state
-            // if (localStorage.getItem("catMenuOpen") === "true") {
-            //     $catMenu.show();
-            //     $categoriesToggle.attr('aria-expanded', 'true');
-            // }
+            /* Fix arrow rotation for Books collapse */
+            $('#bookYears').on('shown.bs.collapse', function () {
+                $('#book').attr('aria-expanded', 'true');
+            });
+
+            $('#bookYears').on('hidden.bs.collapse', function () {
+                $('#book').attr('aria-expanded', 'false');
+            });
 
             /* Resizable Sidebar (desktop only) */
             let isResizing = false;
@@ -295,8 +329,8 @@
                 $('body').css('cursor', 'default');
             });
         });
-
     </script>
+
     @RenderSection("Scripts", false)
 
 </body>

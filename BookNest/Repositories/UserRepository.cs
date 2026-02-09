@@ -14,9 +14,17 @@ namespace BookNest.Repositories
             _dbContext = dbContext;
         }
 
+        public async Task<RoleMaster?> GetAllRoles(int roleId)
+        {
+            return _dbContext.RoleMasters.Where(x => x.RoleId == roleId).FirstOrDefault();
+        }
         public async Task<User?> GetUserByEmail(string email)
         {
             return _dbContext.users.Where(x => x.Email == email).FirstOrDefault();
+        }
+        public async Task<User?> GetUserByUsername(string userName)
+        {
+            return _dbContext.users.Where(x => x.Username == userName).FirstOrDefault();
         }
         public async Task<User?> GetUserByEmailUsername(string usernameEmail)
         {
@@ -25,9 +33,7 @@ namespace BookNest.Repositories
         public async Task<bool> EditPasssword(string usernameEmail , string Password)
         {
             var user = _dbContext.users.Where(x => (x.Email == usernameEmail || x.Username == usernameEmail) && x.Password != Password).FirstOrDefault();
-            if(user==null)
-                return false;
-            user.Password = Password;
+            user.Password = Password;   
             _dbContext.SaveChanges();
             return true;
 

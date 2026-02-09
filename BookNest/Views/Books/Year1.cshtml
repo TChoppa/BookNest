@@ -3,38 +3,51 @@
     ViewBag.PageTitle = "📚 Books 📚";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-<div class="card academic-title-card">
-    <h4 class="mb-0 fw-bold text-center">
-        YEAR - I
-    </h4>
-</div>
-<br />
-<br />
-<div class="container-fluid">
-    <div class="row g-4" id="imageRow"></div>
-    <div class="row g-4" id="imageRow1"></div>
-</div>
-
 <style>
+
     .academic-title-card {
         display: flex;
         align-items: center;
         justify-content: center;
-        /* Size control */
         padding: 14px 20px;
-        width: 90%; /* responsive width */
-        max-width: 420px; /* won't exceed 420px */
-        margin: 1px auto; /* centers the card horizontally */
-        min-height: auto;
-        /* Visuals */
+        width: 90%;
+        max-width: 420px;
+        margin: 1px auto;
         border-radius: 16px;
         background: #ffffff;
         border: 1.5px solid #dbeafe;
         box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
-        user-select: none; /* Prevent text selection */
-        outline: none; /* Remove focus caret */
+    }
+
+    .branch-select-box {
+        width: 90%;
+        max-width: 420px;
+        margin: auto;
+    }
+
+    .branch-center-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 45vh;
+        transition: all .4s ease;
+    }
+
+    .branch-top-wrapper {
+        min-height: auto;
+        margin-top: 25px;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #0066cc;
     }
 
     .book-closed {
@@ -45,14 +58,7 @@
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 12px 25px rgba(0,0,0,0.3);
-        transition: transform 0.3s ease;
-        cursor: pointer;
-        background: #fff;
     }
-
-        .book-closed:hover {
-            transform: rotateY(-10deg) scale(1.05);
-        }
 
         .book-closed img {
             width: 100%;
@@ -69,186 +75,186 @@
         background: linear-gradient(to right, #888, #ccc);
     }
 
-    .book-title {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-       /*  background: rgba(0,0,0,0.6); */
-        color: #fff;
-        font-size: 14px;
-        font-weight: 600;
-        padding: 6px 0;
-    }
-    .custmbtn {
-        padding: 1px 24px;
-        font-size: 16px;
-        font-weight: 600;
-        border-width: 4px;
-        width: 253px;
-        margin-left: 11px;
-        margin-bottom: -6px;
-        left: 15px;
-    }
-
     .cart-controls {
         width: 260px;
         text-align: center;
     }
 
-    .add-btn {
-        width: 48%;
-        font-weight: 600;
-    }
-
-    .qty-controls {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 48%;
-        margin-left: 71px;
-    }
-
-        .qty-controls button {
-            width: 40px;
-            height: 36px;
-            font-weight: bold;
-        }
-
-    .qty {
-        font-size: 16px;
-        font-weight: 600;
-    }
-
 </style>
 
+<div class="card academic-title-card">
+    <h4 class="mb-0 fw-bold text-center">YEAR - I</h4>
+</div>
+
+<div id="branchWrapper" class="branch-center-wrapper">
+
+    <div class="form-group mb-3 position-relative branch-select-box">
+
+        <select id="selBranch" name="UserRole" class="form-control custom-select" required>
+            <option value="" disabled selected hidden>-- Select Branch --</option>
+            <option value="EEE">Electrical & Electronics</option>
+            <option value="CSC">Computer Science</option>
+            <option value="ECE">Electronics</option>
+            <option value="CIV">Civil</option>
+            <option value="MEC">Mechanical</option>
+        </select>
+
+        <i class="bi bi-chevron-down select-arrow"></i>
+
+    </div>
+
+</div>
+
+<div class="container-fluid">
+    <div class="row g-4" id="imageRow"></div>
+</div>
+
 @section Scripts {
+
     <script>
+
         $(function () {
 
-            $.ajax({
-                url: '/Books/GetYear1Books',
-                type: 'GET',
-                success: function (response) {
-                     var books = response.result;
-                    let html = "";
+            $('#selBranch').on('change', function () {
+                debugger;
+                $('#branchWrapper')
+                    .removeClass('branch-center-wrapper')
+                    .addClass('branch-top-wrapper');
 
-                    $.each(books, function (_, book) {
+                var selectedValue = $(this).val();
 
-                        html += `
-                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column align-items-center">
+                $.ajax({
+                    url: '/Books/GetYear1Books',
+                    type: 'POST',
+                    data: { branch: selectedValue , year :'YEAR - I' },
 
-                            <div class="book-closed">
+                    success: function (response) {
 
-                                <div class="book-spine">
-                                    <div>QTY: ${book.availableQuantity}</div>
+                        var books = response.result;
+                        let html = "";
+
+                        $.each(books, function (_, book) {
+
+                            html += `
+                            <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column align-items-center">
+
+                                <div class="book-closed">
+
+                                    <div class="book-spine">
+                                        <div>QTY: ${book.availableQuantity}</div>
+                                    </div>
+
+                                    <img src="${book.imageUrl}" alt="${book.title}">
                                 </div>
 
-                                <img src="${book.imageUrl}" alt="${book.title}">
-                            </div>
+                                <div class="cart-controls mt-2"
+                                     data-id="${book.bookId}"
+                                     data-title="${book.title}"
+                                     data-qty="${book.availableQuantity}"
+                                     data-imageurl="${book.imageUrl}"
+                                     data-year="${book.year}">
 
-                            <div class="cart-controls mt-2"
-                                 data-id="${book.bookId}"
-                                 data-title="${book.title}"
-                                 data-qty="${book.availableQuantity}"
-                                 data-imageurl="${book.imageUrl}"
-                                 data-year="${book.year}">
+                                    <button class="btn btn-success add-btn">ADD</button>
 
-                                <button class="btn btn-success add-btn">ADD</button>
-
-                                <div class="qty-controls d-none">
-                                    <button class="btn btn-outline-secondary minus">−</button>
-                                    <span class="qty">1</span>
-                                    <button class="btn btn-outline-secondary plus">+</button>
+                                    <div class="qty-controls d-none">
+                                        <button class="btn btn-outline-secondary minus">−</button>
+                                        <span class="qty">1</span>
+                                        <button class="btn btn-outline-secondary plus">+</button>
+                                    </div>
                                 </div>
-                            </div>
 
-                        </div>`;
-                    });
+                            </div>`;
+                        });
 
-                    $("#imageRow").html(html);
-                },
-                error: function () {
+                        $("#imageRow").html(html);
+                    },
+                    error: function () {
                     alert("Failed to load books");
                 }
-            });
+                            });
 
-            let cart = {};
 
-            $(document).on("click", ".add-btn", function () {
-                const container = $(this).closest(".cart-controls");
-                const title = container.data("title");
 
-                cart[title] = 1;
+        });
+                  let cart = {};
 
-                $(this).addClass("d-none");
-                container.find(".qty-controls").removeClass("d-none");
-                var itemDetails = {
-                           BookId: container.data("id"),
-                           Title: container.data("title"),
-                           ImageUrl: container.data("imageurl"),
-                           AvailableQuantity: container.data("qty"),
-                           Year: container.data("year"),
-                           Username: "guest"
+                  $(document).on("click", ".add-btn", function () {
+                      const container = $(this).closest(".cart-controls");
+                      const title = container.data("title");
+
+                      cart[title] = 1;
+
+                      $(this).addClass("d-none");
+                      container.find(".qty-controls").removeClass("d-none");
+                      var itemDetails =
+                       {
+                                 BookId: container.data("id"),
+                                 Title: container.data("title"),
+                                 ImageUrl: container.data("imageurl"),
+                                 AvailableQuantity: container.data("qty"),
+                                 Year: container.data("year"),
+                                 Username: "guest"
                        };
-                 $.ajax({
-                    url: '/CartControllercs/AddToCart',
-                    type: 'POST',
-                    data: JSON.stringify(itemDetails),
-                    contentType: "application/json",
-                    success: function () 
-                    {
-                    console.log("Added to cart");
-                     }
+                       $.ajax({
+                          url: '/CartControllercs/AddToCart',
+                          type: 'POST',
+                          data: JSON.stringify(itemDetails),
+                          contentType: "application/json",
+                          success: function ()
+                          {
+                          console.log("Added to cart");
+                           }
+                           });
+
+
+
+                  });
+
+                  $(document).on("click", ".plus", function () {
+                      const container = $(this).closest(".cart-controls");
+                      const title = container.data("title");
+
+                      cart[title]++;
+                      container.find(".qty").text(cart[title]);
+                         var itemDetails = {
+                              BookId: container.data("id"),
+                              Title: container.data("title"),
+                              ImageUrl: container.data("imageurl"),
+                              AvailableQuantity: container.data("qty"),
+                              Year: container.data("year"),
+                              Username: "guest"
+                            };
+                          $.ajax({
+                                  url: '/CartControllercs/IncreaseQtyByOne',
+                                  type: 'POST',
+                                  data: JSON.stringify(itemDetails),
+                                  contentType: "application/json",
+                                  success: function () {
+                                  console.log("Added to cart");
+                  }
+              });
+
+
+                  });
+
+                  $(document).on("click", ".minus", function () {
+                      const container = $(this).closest(".cart-controls");
+                      const title = container.data("title");
+
+                      cart[title]--;
+
+                      if (cart[title] <= 0) {
+                          delete cart[title];
+                          container.find(".qty-controls").addClass("d-none");
+                          container.find(".add-btn").removeClass("d-none");
+                      } else {
+                          container.find(".qty").text(cart[title]);
+                      }
         });
 
+          });
 
 
-            });
-
-            $(document).on("click", ".plus", function () {
-                const container = $(this).closest(".cart-controls");
-                const title = container.data("title");
-
-                cart[title]++;
-                container.find(".qty").text(cart[title]);
-                   var itemDetails = {
-                        BookId: container.data("id"),
-                        Title: container.data("title"),
-                        ImageUrl: container.data("imageurl"),
-                        AvailableQuantity: container.data("qty"),
-                        Year: container.data("year"),
-                        Username: "guest"
-                      };
-                    $.ajax({
-                            url: '/CartControllercs/IncreaseQtyByOne',
-                            type: 'POST',
-                            data: JSON.stringify(itemDetails),
-                            contentType: "application/json",
-                            success: function () {
-                            console.log("Added to cart");
-            }
-        });
-
-
-            });
-
-            $(document).on("click", ".minus", function () {
-                const container = $(this).closest(".cart-controls");
-                const title = container.data("title");
-
-                cart[title]--;
-
-                if (cart[title] <= 0) {
-                    delete cart[title];
-                    container.find(".qty-controls").addClass("d-none");
-                    container.find(".add-btn").removeClass("d-none");
-                } else {
-                    container.find(".qty").text(cart[title]);
-                }
-            });
-
-        });
     </script>
 
 }

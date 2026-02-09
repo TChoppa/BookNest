@@ -1,4 +1,5 @@
 ﻿using BookNest.DTO;
+using BookNest.Enums;
 using BookNest.Interfaces;
 using BookNest.Models;
 
@@ -11,12 +12,12 @@ namespace BookNest.Services
         { 
           _repo = repo ;
         }
-
-        public async Task<bool> Register(RegisterDTO dto)
+        public async Task<RoleMaster?> GetAllRoles(int roleId)
         {
-           
-            try
-            {           
+            return await _repo.GetAllRoles(roleId);
+        }
+        public async Task<bool> Register(RegisterDTO dto)
+        {          
                 var existingUser = await _repo.GetUserByEmail(dto.Email);
                 if (existingUser != null) {
                     return false;
@@ -30,62 +31,38 @@ namespace BookNest.Services
                     Lastname = dto.Lastname,
                     Password=dto.Password
                 };
-                var isSuccess = await _repo.AddUser(user);
-           
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Write(ex.Message);
-                return false;
-            }
+                return await _repo.AddUser(user);
         }
 
         public async Task<User?> Login (LoginDTO dto)
-        {
-            try
-            {
-                var userDetails = await _repo.GetUserByUsernamePassword(dto.UserNameEmail, dto.Password);
-                if (userDetails == null)
-                {
-                    return null;
-                }
-                return userDetails;
-
-            }
-            catch (Exception ex)
-            {
-                Console.Write(ex.Message);
-                return null;
-            }
+        {          
+            return await _repo.GetUserByUsernamePassword(dto.UserNameEmail, dto.Password);            
         }
 
-        public async Task<int> EditPasssword(ForgetPassword dto)
+        public async Task<PasswordChange> EditPasssword(ForgetPassword dto)
         {
-            try
-            {
                 var user = await _repo.GetUserByEmailUsername(dto.UserNameEmail);
                 if (user == null)
                 {
-                    return 2;
+                    return PasswordChange.UserNotFound;
                 }
                 if (dto.NewPassword != dto.ConfirmPassword)
                 {
-                    return 1;
+                    return PasswordChange.PasswordMismatch;
                 }
-                             
+                var isPrevPasswordMatch = await _repo.GetUserByUsernamePassword(dto.UserNameEmail, dto.ConfirmPassword);
+                if (isPrevPasswordMatch != null)
+                    return PasswordChange.DuplicatePassword;              
                 var isPasswordChange = await _repo.EditPasssword(user.Username, dto.NewPassword);
                 if (isPasswordChange)
-                    return 3;
+                    return PasswordChange.Success;
+                return PasswordChange.UnChanged;
+           
+        }
 
-                return 0 ;
-
-            }
-            catch (Exception ex)
-            {
-                Console.Write(ex.Message);
-                return 0;
-            }
+        public async Task<User ?> GetUserByUsername(string username)
+        {
+            return await _repo.GetUserByUsername(username);
         }
     }
 }
