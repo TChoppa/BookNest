@@ -8,7 +8,7 @@ namespace BookNest.Interfaces
     {
         public Task<RoleMaster?> GetAllRoles(int roleId);
         public Task<bool> Register(RegisterDTO dto);
-        public Task<User?> Login(LoginDTO dto);
+        public Task<LoginResultDTO> Login(LoginDTO dto);
         public Task<PasswordChange> EditPasssword(ForgetPassword dto);
         public Task<User?> GetUserByUsername(string username);
 

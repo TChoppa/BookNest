@@ -56,9 +56,9 @@ namespace BookNest.Controllers
 
                 return Unauthorized(new { success = false, message = "Duplicate User" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = "Internal server error" });
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
 
@@ -70,47 +70,43 @@ namespace BookNest.Controllers
         }
         [HttpPost]
         public async Task<IActionResult> Login(LoginDTO dto)
-            {
+        {
             ViewBag.PageTitle = "Login";
-            if (dto == null)
-                return BadRequest(new { success = false, message = "Invalid user" });
-            var userExists = await _HomeService.Login(dto);
-            if(userExists==null)
-                return Unauthorized (new { success = false, message = "User Not Exists" });
-            var userRole = await _HomeService.GetAllRoles(userExists.Fk_RoleId);
-            if (userRole==null)
-                return Unauthorized(new { success = false, message = "Invalid user" });
-            var claims = new List<Claim>()
+            try { 
+                    if (dto == null)
+                        return BadRequest(new { success = false, message = "Invalid user" });
+                    var loginResult = await _HomeService.Login(dto);
+                    if(!loginResult.Success)
+                        return Unauthorized(new {success=false,message=loginResult.Message});
+                    var claims = new List<Claim>()
+                    {
+                        new Claim(ClaimTypes.Name, loginResult.UserList.Username),
+                        new Claim(ClaimTypes.Email, loginResult.UserList.Email),
+                        new Claim(ClaimTypes.Role, loginResult.Role)
+                    };
+                    var identity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    var principal = new ClaimsPrincipal(identity);
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        principal,
+                        new AuthenticationProperties
+                        {
+                            IsPersistent = false,
+                            ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
+                        });
+
+                    HttpContext.Session.SetString("UserName", loginResult.UserList.Username);
+            
+                    return Ok(new { success = true, message = loginResult.Message, redirectUrl = Url.Action("Index", "CartControllercs") });
+            }
+            catch (Exception ex)
             {
-                new Claim(ClaimTypes.Name, userExists.Username),
-                new Claim(ClaimTypes.Email, userExists.Email),
-                new Claim(ClaimTypes.Role, userRole.Name)
-            };
-            var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties
-                {
-                    IsPersistent = false,
-                    ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
-                });
-
-            HttpContext.Session.SetString("UserName", userExists.Username);
-            string roleMessage = userExists.Fk_RoleId switch
-            {             
-                1 => "Login Student successfully",
-                2 => "Login Faculty successfully",
-                3 => "Login Librarian successfully",
-                4 => "Login Admin successfully",
-                _ => "Login Successfullty"
-            };
-            return Ok(new { success = true, message = roleMessage, redirectUrl = Url.Action("Index", "CartControllercs") });
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
         [HttpGet]
         public IActionResult ForgetPassword()

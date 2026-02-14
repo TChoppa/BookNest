@@ -2,6 +2,7 @@
 using BookNest.DTO;
 using BookNest.Interfaces;
 using BookNest.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 namespace BookNest.Repositories
@@ -20,34 +21,33 @@ namespace BookNest.Repositories
         }
         public async Task<User?> GetUserByEmail(string email)
         {
-            return _dbContext.users.Where(x => x.Email == email).FirstOrDefault();
+            return _dbContext.users.Where(x => x.Email == email ).FirstOrDefault();
         }
         public async Task<User?> GetUserByUsername(string userName)
         {
-            return _dbContext.users.Where(x => x.Username == userName).FirstOrDefault();
+            return await _dbContext.users.FirstOrDefaultAsync(x => x.Username == userName);
         }
-        public async Task<User?> GetUserByEmailUsername(string usernameEmail)
+        public async Task<User?> GetUserByEmailUsername(string email , string userName)
         {
-            return _dbContext.users.Where(x => x.Email == usernameEmail || x.Username == usernameEmail).FirstOrDefault();
+            return _dbContext.users.Where(x => x.Email == email || x.Username == userName).FirstOrDefault();
         }
-        public async Task<bool> EditPasssword(string usernameEmail , string Password)
+        public async Task<bool> EditPasssword(User editedUser)
         {
-            var user = _dbContext.users.Where(x => (x.Email == usernameEmail || x.Username == usernameEmail) && x.Password != Password).FirstOrDefault();
-            user.Password = Password;   
-            _dbContext.SaveChanges();
-            return true;
+              _dbContext.users.Update(editedUser);
+            var result = _dbContext.SaveChanges();
+             return result > 0; ;
 
         }
 
-        public async Task<User?> GetUserByUsernamePassword(string usernameEmail, string password)
+        public async Task<User?> GetUserByUsernamePassword(string userName, byte[] passwordHash , byte[] passwordSalt)
         {
-            return _dbContext.users.Where(x => (x.Username == usernameEmail && x.Password == password)).FirstOrDefault();
+            return _dbContext.users.Where(x => (x.Username == userName && x.PasswordHash == passwordHash && x.PasswordSalt==passwordSalt)).FirstOrDefault();
         }
         public async Task<bool> AddUser(User user)
         {
              _dbContext.users.Add(user);
-             _dbContext.SaveChanges();
-            return true;
+             var result = _dbContext.SaveChanges();
+            return result>0;
         }
     }
 }

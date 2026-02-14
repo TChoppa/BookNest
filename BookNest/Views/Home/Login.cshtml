@@ -181,8 +181,8 @@
                     <div class="card-body">
                         <form id="registerForm">
                             <div class="form-group mb-3">
-                                <input type="text" id="UserNameEmail" name="UserName"
-                                       class="form-control" placeholder="Username/UserId" required minlength="3" maxlength="20" pattern="[A-Za-z0-9]+" />
+                                <input type="text" id="UserName" name="UserName"
+                                       class="form-control" placeholder="Username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9]+" />
                             </div>
                             <div class="form-group mb-3">
                                 <input type="password" id="Password" name="Password"
@@ -220,7 +220,7 @@
             {
                 debugger;
                 return {
-                    UserNameEmail: $("#UserNameEmail").val(),
+                    UserName: $("#UserName").val(),
                     Password: $("#Password").val()
                 }
             }
@@ -233,9 +233,7 @@
                         success: function (response) {
                             debugger;
 
-                            if (response.success) {
-                                // $("#UserNameEmail").val("")
-                                // $("#Password").val("")                    
+                            if (response.success) {                  
                                 alert(response.message);
                                  window.location.href = '@Url.Action("Dashboard", "Home")';
                             }
@@ -253,9 +251,25 @@
 
                             }
                         },
-                        error: function () {
-                            alert("Error during Login.");
-                        }
+                        error: function (xhr)
+                        { 
+                            try
+                            { 
+                                var response = JSON.parse(xhr.responseText); 
+                                $("#msg")
+                                    .removeClass("text-success")
+                                    .addClass("text-danger")
+                                    .text(response.message)
+                                    .stop(true, true)
+                                    .fadeIn(200)
+                                    .delay(4000)
+                                    .fadeOut(600);
+                                     $("#Email").focus();
+                            } 
+                            catch 
+                            { 
+                                alert("Unexpected error occurred.");
+                            } }
                     });
                 });
         });
