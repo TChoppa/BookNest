@@ -10,7 +10,6 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -29,18 +28,14 @@
             width: 100vw;
         }
 
-        /* Sidebar */
         #sidebar {
             width: 250px;
-            min-width: 150px;
-            max-width: 400px;
             background: linear-gradient(180deg, #1e293b, #0f172a);
             box-shadow: 4px 0 15px rgba(0,0,0,0.15);
             padding: 20px;
             display: flex;
             flex-direction: column;
             color: #fff;
-            transition: left 0.3s ease;
             height: 100vh;
             overflow-y: auto;
         }
@@ -76,14 +71,6 @@
             color: #f87171 !important;
         }
 
-        /* Divider */
-        #divider {
-            width: 5px;
-            cursor: col-resize;
-            background: #94a3b8;
-        }
-
-        /* Main Content */
         main.content {
             flex-grow: 1;
             display: flex;
@@ -92,7 +79,6 @@
             overflow: hidden;
         }
 
-        /* Header */
         .main-header {
             height: 66px;
             border-bottom: 2px solid #0f172a;
@@ -117,36 +103,30 @@
             padding: 20px;
         }
 
-        /* Arrow rotation */
-        .nav-link[aria-expanded="true"] .arrow-icon {
-            transform: rotate(180deg);
-        }
-
         .arrow-icon {
             transition: transform 0.3s ease;
         }
 
-        /* ================= MOBILE ================= */
-        @@media (max-width: 768px) {
-            .layout-flex {
-                position: relative;
-            }
+        .nav-link[aria-expanded="true"] .arrow-icon {
+            transform: rotate(180deg);
+        }
 
+        #sidebar .nav-link.active {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+        }
+
+        @@media (max-width: 768px) {
             #sidebar {
                 position: fixed;
                 left: -260px;
                 top: 0;
-                height: 100%;
                 z-index: 1000;
             }
 
                 #sidebar.show {
                     left: 0;
                 }
-
-            #divider {
-                display: none;
-            }
 
             .hamburger {
                 display: block;
@@ -157,6 +137,7 @@
 
 <body>
     <div class="layout-flex">
+
         <!-- Sidebar -->
         <nav id="sidebar">
             <div id="Title">
@@ -164,8 +145,9 @@
             </div>
 
             <ul class="nav flex-column">
+
                 <li class="nav-item">
-                    <a class="nav-link active" href="@Url.Action("Dashboard", "Home")">
+                    <a class="nav-link" href="@Url.Action("Dashboard", "Home")">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
@@ -175,163 +157,103 @@
                        href="#"
                        id="categoriesToggle"
                        aria-expanded="false">
-                        <span>
-                            <i class="bi bi-book"></i> Categories
-                        </span>
+                        <span><i class="bi bi-book"></i> Categories</span>
                         <i class="bi bi-chevron-down arrow-icon"></i>
                     </a>
 
                     <div id="catMenu" style="display:none;">
-                        <!-- Books toggle -->
                         <a class="nav-link ms-3 d-flex justify-content-between align-items-center"
                            href="#"
                            id="book"
                            data-bs-toggle="collapse"
                            data-bs-target="#bookYears"
-                           aria-expanded="false"
-                           aria-controls="bookYears">
+                           aria-expanded="false">
                             <span>Books</span>
                             <i class="bi bi-chevron-down arrow-icon"></i>
                         </a>
 
                         <div class="collapse ms-5" id="bookYears">
-                            <a class="nav-link" href="@Url.Action("Year1", "Books")" id="year">Year 1</a>
+                            <a class="nav-link" href="@Url.Action("Year1", "Books")">Year 1</a>
                             <a class="nav-link" href="#">Year 2</a>
                             <a class="nav-link" href="#">Year 3</a>
                             <a class="nav-link" href="#">Year 4</a>
                         </div>
-                    
-                        @if (User.IsInRole("Faculty") || User.IsInRole("Librarian"))
-                        {
-                        <a class="nav-link ms-3" id="journals"
-                           href="@Url.Action("Journals", "Category")">Journals</a>
-                        }
-@* 
-                        <a class="nav-link ms-3" id="ClubHost"
-                           href="@Url.Action("ClubHost", "Category")">ClubHost</a> *@
                     </div>
                 </li>
-                <li class="nav-item ">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-gear"></i> ClubHost
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-cart"></i>
-                        Cart
-                    </a>
-                </li>
-                <li class="nav-item ">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-gear"></i> Orders
-                    </a>
-                </li>
-                @if (User.IsInRole("Librarian"))
-                  {
-                <li class="nav-item ">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-gear"></i> OrdersList
-                    </a>
-                </li>
-                   }
-                <li class="nav-item mt-5">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-gear"></i> Settings
-                    </a>
-                </li>
 
-                <li class="nav-item mt-2">
-                    <a class="nav-link text-danger" href="#">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
-                </li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-gear"></i> ClubHost</a></li>
+                <li class="nav-item"><a class="nav-link" href="@Url.Action("ViewCart", "CartControllercs")"><i class="bi bi-cart"></i> Cart</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-box"></i> Orders</a></li>
+                <li class="nav-item mt-5"><a class="nav-link" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                <li class="nav-item mt-2"><a class="nav-link text-danger" href="#"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+
             </ul>
         </nav>
 
-        <!-- Divider -->
-        <div id="divider"></div>
-
-        <!-- Main Content -->
         <main class="content">
             <div class="main-header">
                 <span class="hamburger" id="menuToggle">
                     <i class="bi bi-list"></i>
                 </span>
-                <h5 id="pageTitle">@ViewBag.PageTitle</h5>
+                <h5>@ViewBag.PageTitle</h5>
             </div>
 
             <div class="main-body">
                 @RenderBody()
             </div>
         </main>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <script>
         $(document).ready(function () {
-            debugger;
-           var roleid = '@ViewBag.roleId';
-            var $categoriesToggle = $('#categoriesToggle');
-            var $catMenu = $('#catMenu');
 
-            /* Sidebar toggle (mobile) */
-            $('#menuToggle').on('click', function () {
+            var currentUrl = window.location.pathname.toLowerCase();
+
+            // Highlight active link
+            $('#sidebar .nav-link').each(function () {
+                var linkUrl = $(this).attr('href');
+
+                if (linkUrl && currentUrl === linkUrl.toLowerCase()) {
+                    $(this).addClass('active');
+
+                    // If active link is under Books → keep menu open
+                    if (currentUrl.includes("/books")) {
+                        $('#catMenu').show();
+                        $('#bookYears').addClass('show');
+                        $('#categoriesToggle').attr('aria-expanded', 'true');
+                        $('#book').attr('aria-expanded', 'true');
+                    }
+                }
+            });
+
+            // If not Books page → collapse
+            if (!currentUrl.includes("/books")) {
+                $('#catMenu').hide();
+                $('#bookYears').removeClass('show');
+                $('#categoriesToggle').attr('aria-expanded', 'false');
+                $('#book').attr('aria-expanded', 'false');
+            }
+
+            // Categories toggle
+            $('#categoriesToggle').click(function (e) {
+                e.preventDefault();
+                let isOpen = $(this).attr('aria-expanded') === 'true';
+                $('#catMenu').toggle(!isOpen);
+                $(this).attr('aria-expanded', !isOpen);
+            });
+
+            // Mobile toggle
+            $('#menuToggle').click(function () {
                 $('#sidebar').toggleClass('show');
             });
 
-            $('#year').on('click', function () {
-                window.location.href = '@Url.Action("Year1", "Books")';
-            });
-
-            /* Categories toggle */
-            $categoriesToggle.on('click', function (e) {
-                e.preventDefault();
-                const isOpen = $(this).attr('aria-expanded') === 'true';
-                $catMenu.toggle(!isOpen);
-                $(this).attr('aria-expanded', !isOpen);
-                localStorage.setItem("catMenuOpen", !isOpen);
-            });
-
-            /* Fix arrow rotation for Books collapse */
-            $('#bookYears').on('shown.bs.collapse', function () {
-                $('#book').attr('aria-expanded', 'true');
-            });
-
-            $('#bookYears').on('hidden.bs.collapse', function () {
-                $('#book').attr('aria-expanded', 'false');
-            });
-
-            /* Resizable Sidebar (desktop only) */
-            let isResizing = false;
-            const $divider = $('#divider');
-            const $sidebar = $('#sidebar');
-
-            $divider.on('mousedown', function () {
-                if (window.innerWidth <= 768) return;
-                isResizing = true;
-                $('body').css('cursor', 'col-resize');
-            });
-
-            $(document).on('mousemove', function (e) {
-                if (!isResizing) return;
-
-                let newWidth = e.clientX;
-                if (newWidth < 150) newWidth = 150;
-                if (newWidth > 400) newWidth = 400;
-
-                $sidebar.css('width', newWidth + 'px');
-            });
-
-            $(document).on('mouseup', function () {
-                isResizing = false;
-                $('body').css('cursor', 'default');
-            });
         });
     </script>
 
-    @RenderSection("Scripts", false)
 
+    @RenderSection("Scripts", false)
 </body>
 </html>

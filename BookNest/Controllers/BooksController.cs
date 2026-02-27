@@ -1,13 +1,14 @@
 ﻿using BookNest.DatabaseContext;
 using BookNest.Interfaces;
+using BookNest.IServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookNest.Controllers
 {
     public class BooksController : Controller
     {
-        private readonly IBookRepository _bookService;
-        public BooksController(IBookRepository context)
+        private readonly IBookService _bookService;
+        public BooksController(IBookService context)
         {
             _bookService = context;
         }
@@ -21,11 +22,11 @@ namespace BookNest.Controllers
             return View();
         }
         [HttpPost]
-        public IActionResult GetYear1Books(string branch , string year)
+        public  async Task<IActionResult> GetYear1Books(string branch , string year)
         {
-            var books = _bookService.GetYear1Books(branch , year);
-
-            return Json(books);
+            var username = HttpContext.Session.GetString("UserName");
+            var books =  await _bookService.GetYear1Books(branch , year , username);
+            return Ok(books);
         }
 
     }

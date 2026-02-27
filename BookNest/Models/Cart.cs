@@ -12,6 +12,8 @@ namespace BookNest.Models
         public string ImageUrl { get; set; } = string.Empty;
         public int AvailableQuantity { get; set; }
         public string Year { get; set; } = string.Empty;
+        public bool IsOrdered { get; set; } = false;
+
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BookNest.DatabaseContext;
 using BookNest.Interfaces;
+using BookNest.IServices;
 using BookNest.Repositories;
 using BookNest.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -17,7 +18,8 @@ namespace BookNest
             builder.Services.AddControllersWithViews();
             builder.Services.AddScoped<IHome, HomeService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped< BookService>();
+            builder.Services.AddScoped<ICartService,CartService>();
+            builder.Services.AddScoped< IBookService,BookService>();
             builder.Services.AddScoped<IBookRepository, BookRepository>();
             builder.Services.AddScoped<ICartRepository, CartRepository>();
             builder.Services.AddScoped<CartService>();

@@ -17,31 +17,43 @@ namespace BookNest.Repositories
         {
             return await _dbContext.CartList.ToListAsync();
         }
-
-        public async Task<int> AddToCart(CartDTO cartDTO)
+        public async Task<List<Cart>> GetCartListByUsername(string username)
         {
-            int isItemAdded = 0;
-            var cartItem = new Cart()
-            {
-                Username = cartDTO.Username,
-                BookId = cartDTO.BookId,
-                Title = cartDTO.Title,
-                ImageUrl = cartDTO.ImageUrl,
-                AvailableQuantity=cartDTO.AvailableQuantity,
-                Year=cartDTO.Year
-            };
-             _dbContext.Add(cartItem);
-            var bookItems = _dbContext.Books.Where(x => x.BookId == cartDTO.BookId).FirstOrDefault();
-            if (bookItems == null)
-                return 0;
-            bookItems.AvailableQuantity--;
-            //_dbContext.SaveChanges();
+            return await _dbContext.CartList.Where(x => x.Username == username && x.IsOrdered == false).ToListAsync();
+        }
+        public async Task<int> GetCartListCount(string username)
+        {
+            return await _dbContext.CartList.Where(x => x.Username == username && x.IsOrdered == false).SumAsync(x=>x.AvailableQuantity);
+        }
+        public async Task AddToCart(Cart cartDTO)
+        {
+            await _dbContext.CartList.AddAsync(cartDTO);
             await _dbContext.SaveChangesAsync();
-            //IncreaseQtyByOne();
-            isItemAdded = 1;
-            return isItemAdded;
         }
 
+        public async Task<Book?> GetBookById(int id)
+        {
+            return await _dbContext.Books.Where(x => x.BookId == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<Cart?> GetCartByIdBookId(CartDTO cart)
+        {
+            return await _dbContext.CartList.Where(x => x.BookId == cart.BookId && x.Username == cart.Username && x.IsOrdered == false).FirstOrDefaultAsync();
+        }
+        public async Task<Cart?> GetCartByIdCartId(int cartId)
+        {
+            return await _dbContext.CartList.Where(x=>x.CartId==cartId).FirstOrDefaultAsync();
+        }
+        public async Task UpdateCart(Cart cart)
+        {
+            _dbContext.CartList.Update(cart);
+            await _dbContext.SaveChangesAsync();
+        }
+        public async Task UpdateBook(Book book)
+        {
+              _dbContext.Books.Update(book);
+              await _dbContext.SaveChangesAsync();
+        }   
         public async Task<int> IncreaseQtyByOne(CartDTO cartDTO)
         {
             int isQtyInc = 0;

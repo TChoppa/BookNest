@@ -19,5 +19,10 @@ namespace BookNest.Repositories
             return _dbContext.Books
                 .Where(b => b.Year == year || b.BranchCode==branch).ToList();           
         }
+        public async Task<Cart?> GetBookById(int bookId , string userName)
+        {
+            return await _dbContext.CartList.Where(x => x.BookId == bookId && x.Username == userName && !x.IsOrdered ).FirstOrDefaultAsync();
+       }
+
     }
 }

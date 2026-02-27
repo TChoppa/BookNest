@@ -100,8 +100,10 @@ namespace BookNest.Controllers
                         });
 
                     HttpContext.Session.SetString("UserName", loginResult.UserList.Username);
-            
-                    return Ok(new { success = true, message = loginResult.Message, redirectUrl = Url.Action("Index", "CartControllercs") });
+                var userName = HttpContext.Session.GetString("UserName");
+                ViewBag.UserName = userName;
+
+                return Ok(new { success = true, message = loginResult.Message, redirectUrl = Url.Action("Index", "CartControllercs") });
             }
             catch (Exception ex)
             {
@@ -137,6 +139,7 @@ namespace BookNest.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var userName = HttpContext.Session.GetString("UserName");
+            ViewBag.UserName = userName;
             var users = await _HomeService.GetUserByUsername(userName);
             ViewBag.roleId = users.Fk_RoleId;
             return View();
