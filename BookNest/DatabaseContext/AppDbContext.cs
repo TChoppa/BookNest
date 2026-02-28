@@ -15,6 +15,7 @@
             public DbSet<Cart> CartList { get; set; }
             public DbSet<Order> Orders { get; set; }
             public DbSet<OrderItem> OrderItems {  get; set; }
+            public DbSet<IssuedBook> IssuedBooks { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

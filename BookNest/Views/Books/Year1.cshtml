@@ -99,18 +99,23 @@
         z-index: 3;
     }
 
-        .add-overlay .add-btn {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid #fff;
-            color: #fff;
-            font-weight: 600;
-            border-radius: 10px;
-            padding: 4px 14px;
-        }
+    .qty {
+        cursor: default;
+        user-select: none;
+    }
 
-            .add-overlay .add-btn:hover {
-                background: rgba(0,0,0,0.6);
-            }
+    .add-overlay .add-btn {
+        background: rgba(0,0,0,0.4);
+        border: 1px solid #fff;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 4px 14px;
+    }
+
+        .add-overlay .add-btn:hover {
+            background: rgba(0,0,0,0.6);
+        }
 
     /* Transparent qty controls */
     .qty-controls {
@@ -209,9 +214,50 @@
 
 @section Scripts {
     <script>
-        
-         $(function () {
 
+         $(function () {
+             function updateQtyControlsBasedOnRole() {
+            $.ajax({
+                            url: '/Home/GetUserRole',
+                            type: 'GET',
+                            success: function (role) {
+
+                                console.log("role :"+ role);
+                            if (role === "Student") {
+
+                                $(".cart-controls").each(function () {
+
+                                    let container = $(this);
+                                    //let qty = Number(container.data("qty"));
+                                    let qty = Number(container.find(".qty").text());
+
+                                    if (qty === 1) {
+                                        container.find(".plus").prop("disabled", true);
+                                        return;
+                                    }
+                                     container.find(".plus").prop("disabled", false);
+                                });
+                        }
+                        else if(role === "Faculty")
+                        {
+                           debugger;
+                             $(".cart-controls").each(function () {
+
+                                    let container = $(this);
+                                    //let qty = Number(container.data("qty"));
+                                      let qty = Number(container.find(".qty").text());
+                                    console.log(qty);
+                                    if (qty === 5) {
+                                        container.find(".plus").prop("disabled", true);
+                                        return;
+                                    }
+                                     container.find(".plus").prop("disabled", false);
+                                });
+                        }
+                    }
+                });
+
+        }
             function updateCartUIFromServer() {
             $.ajax({
                 url: '/CartControllercs/GetCartCount',
@@ -273,22 +319,22 @@
 
                                 <img src="${book.imageUrl}" alt="${book.title}">
 
-                                        <div class="add-overlay cart-controls"
-             data-id="${book.bookId}"
-             data-title="${book.title}"
-             data-qty="${book.cartQty}"
-             data-imageurl="${book.imageUrl}"
-             data-year="${book.year}">
+                                   <div class="add-overlay cart-controls"
+                                     data-id="${book.bookId}"
+                                     data-title="${book.title}"
+                                     data-qty="${book.cartQty}"
+                                     data-imageurl="${book.imageUrl}"
+                                     data-year="${book.year}">
 
-            <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}">ADD</button>
+                                    <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}">ADD</button>
 
-            <div class="qty-controls ${book.cartQty > 0 ? '' : 'd-none'}">
-                <button class="btn minus">−</button>
-                <span class="qty">${book.cartQty > 0 ? book.cartQty : 1}</span>
-                <button class="btn plus">+</button>
-            </div>
+                                    <div class="qty-controls ${book.cartQty > 0 ? '' : 'd-none'}">
+                                        <button class="btn minus">−</button>
+                                        <span class="qty">${book.cartQty > 0 ? book.cartQty : 1}</span>
+                                        <button class="btn plus">+</button>
+                                    </div>
 
-        </div>
+                                </div>
 
                             </div>
                         </div>`;
@@ -296,7 +342,8 @@
 
                     $("#imageRow").html(html);
                     updateCartUIFromServer();
-                },
+                    updateQtyControlsBasedOnRole();
+                        },
                 error: function () {
                     alert("Failed to load books");
                 }
@@ -331,7 +378,9 @@
                     contentType: "application/json",
                     success: function () {
             // ✅ runs AFTER server updates cart
+             updateQtyControlsBasedOnRole();
             updateCartUIFromServer();
+
         }
                 });
                 updateCartUIFromServer();
@@ -365,8 +414,10 @@
                 contentType: "application/json",
                  success: function () {
             // ✅ runs AFTER server updates cart
-            updateCartUIFromServer();
+                updateCartUIFromServer();
+                updateQtyControlsBasedOnRole();
         }
+
             });
             // updateCartUIFromServer();
         });
@@ -408,11 +459,12 @@
                 success: function () {
             // ✅ runs AFTER server updates cart
             updateCartUIFromServer();
+            updateQtyControlsBasedOnRole();
         }
             });
         });
 
-           
+
         });
     </script>
 }

@@ -1,8 +1,10 @@
 ﻿using BookNest.DatabaseContext;
 using BookNest.DTO;
 using BookNest.Interfaces;
+using BookNest.Migrations;
 using BookNest.Models;
 using Microsoft.EntityFrameworkCore;
+using Cart = BookNest.Models.Cart;
 
 namespace BookNest.Repositories
 {
@@ -20,6 +22,11 @@ namespace BookNest.Repositories
         public async Task<List<Cart>> GetCartListByUsername(string username)
         {
             return await _dbContext.CartList.Where(x => x.Username == username && x.IsOrdered == false).ToListAsync();
+        }
+        public async Task DeleteCartList(List<Cart> cartItems)
+        {
+            _dbContext.CartList.RemoveRange(cartItems);
+            await _dbContext.SaveChangesAsync();
         }
         public async Task<int> GetCartListCount(string username)
         {

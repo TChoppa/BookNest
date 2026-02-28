@@ -1,7 +1,33 @@
-﻿@model IEnumerable<Cart>
+﻿@{
+    ViewBag.Title = "Image Gallery";
+    ViewBag.PageTitle = "Cart 🛒";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model IEnumerable<Cart>
+
+<!-- Correct references -->
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
 <style>
+    /* your styles unchanged */
     .compact-card {
         border-radius: 10px;
+    }
+
+    .academic-title-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 20px;
+        width: 90%;
+        max-width: 420px;
+        margin: 1px auto;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1.5px solid #dbeafe;
+        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
     }
 
     .compact-row {
@@ -42,23 +68,46 @@
         font-size: 14px;
         font-weight: 600;
     }
+
+    .Confirm-orders-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 9999;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 22px;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(79,70,229,0.4);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .Confirm-orders-btn:hover {
+            background: linear-gradient(135deg, #4338ca, #4f46e5);
+            color: #fff;
+        }
 </style>
-@foreach (var item in Model)
+<div id="cartContainer">
+@if (Model != null && Model.Any())
+{ 
+
+    @foreach (var item in Model)
 {
     <div class="card mb-2 shadow-sm compact-card">
         <div class="row g-0 align-items-center compact-row">
-
             <div class="col-2 compact-img-col">
                 <img src="@item.ImageUrl" class="img-fluid compact-img" alt="@item.Title">
             </div>
-
             <div class="col-7">
                 <div class="card-body compact-body">
                     <h6 class="card-title mb-1">@item.Title</h6>
                     <p class="card-text small mb-0">@item.Year</p>
                 </div>
             </div>
-
             <div class="col-3 text-center">
                 <div class="d-flex justify-content-center align-items-center compact-qty">
                     <button class="btn btn-outline-success minus btn-sm" data-id="@item.CartId">−</button>
@@ -66,66 +115,164 @@
                     <button class="btn btn-outline-success plus btn-sm" data-id="@item.CartId">+</button>
                 </div>
             </div>
-
         </div>
     </div>
+        }
     }
-    @section Scripts 
+    else
     {
-        <script>
-                    $(document).ready(function () {
+        <div class="card academic-title-card text-center"> 
+            <h4 class="mb-0 fw-bold">Your cart is empty</h4> </div>
+    }
+</div>
+<!-- Single modal outside loop -->
+<div class="modal fade" id="orderModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Confirmation</h5>
+                <button type="button" class="btn-close" id="closeCartBtn" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your order has been confirmed</p>
+                <p>Order ID: <span id="orderId"></span></p>
+                <p>Please navigate to Order to check the items</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="okBtn" class="btn btn-success">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Single confirm button outside loop -->
+<a id="confirmBtn" href="javascript:void(0)" class="btn Confirm-orders-btn">
+    <i class="bi bi-cart-check"></i> Confirm Order
+</a>
+
+@section Scripts {
+    <script>
+        function updateQtyControlsBasedOnRole() {
+            $.ajax({
+                url: '/Home/GetUserRole',
+                type: 'GET',
+                success: function (role) {
+                    console.log("role :" + role);
+                    $(".compact-qty").each(function () {
+                        let container = $(this);
+                        let qty = Number(container.find(".qty-display").text());
+                        if (role === "Student") {
+                            container.find(".plus").prop("disabled", qty === 1);
+                        } else if (role === "Faculty") {
+                            container.find(".plus").prop("disabled", qty === 5);
+                        }
+                    });
+                }
+            });
+        }
+        function EmptyCardcard()
+        {
+            const emptyCard = `
+                <div class="card academic-title-card text-center">
+                    <h4 class="mb-0 fw-bold">Your cart is empty</h4>
+                </div>`;
+            $("#cartContainer").append(emptyCard);
+        }
+        $(document).ready(function () {
+            // Confirm order
+           // EmptyCardcard();
+            $("#confirmBtn").click(function (e) {
+                 e.preventDefault();
+                $.ajax({
+                    url: '/Order/ConfirmOrder',
+                    type: 'POST',
+                    success: function (response) {
+                        console.log(response); // debug
+                        if (response.success) {
+                            $("#orderId").text(response.orderId);
+                            $("#orderModal").modal("show");
+                        } else {
+                            alert(response.message || "Something went wrong");
+                        }
+                    },
+                    error: function () {
+                        alert("Error confirming order. Please try again.");
+                    }
+                });
+            });
+
+            // OK button redirect
+            $("#okBtn").click(function () {
+                window.location.href = "/Order/Index";
+            });
+            $("#closeCartBtn").click(function () {
+            // Remove all cart cards
+            $(".compact-card").remove();
+            EmptyCardcard();
+
+            $("#orderModal").modal("hide");
+            $("#confirmBtn").hide();
+        });
+
+            // Initial role-based qty control
+            updateQtyControlsBasedOnRole();
+
+            // Remove cards with qty=0
             $(".qty-display").each(function () {
                 var qty = parseInt($(this).text());
                 if (qty === 0) {
                     $(this).closest(".card").remove();
                 }
             });
-        });
 
+            // Plus button
             $(document).on("click", ".plus", function () {
+                var cartId = $(this).data("id");
+                var qtySpan = $(this).siblings(".qty-display");
+                var currentQty = parseInt(qtySpan.text());
+                $.ajax({
+                    url: '/CartControllercs/IncreaseQtyByOneInCart',
+                    type: 'POST',
+                    data: { cartId: cartId },
+                    success: function () {
+                        qtySpan.text(currentQty + 1);
+                        updateQtyControlsBasedOnRole();
+                    }
+                });
+            });
 
-            var cartId = $(this).data("id");
-            var qtySpan = $(this).siblings(".qty-display");
-            var currentQty = parseInt(qtySpan.text());
-
-            $.ajax({
-                url: '/CartControllercs/IncreaseQtyByOneInCart',
-                type: 'POST',
-                data: { cartId: cartId },
-                success: function () {
-                    qtySpan.text(currentQty + 1);
+            // Minus button
+            $(document).on("click", ".minus", function () {
+                var cartId = $(this).data("id");
+                var qtySpan = $(this).siblings(".qty-display");
+                var currentQty = parseInt(qtySpan.text());
+                if (currentQty <= 1) {
+                    $.ajax({
+                        url: '/CartControllercs/DecreaseQtyByOneInCart',
+                        type: 'POST',
+                        data: { cartId: cartId },
+                        success: function () {
+                            qtySpan.closest(".card").remove();
+                            EmptyCardcard();
+            //                 const emptyCard = `
+            //     <div class="card academic-title-card text-center">
+            //         <h4 class="mb-0 fw-bold">Your cart is empty</h4>
+            //     </div>`;
+            // $("#cartContainer").append(emptyCard);
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: '/CartControllercs/DecreaseQtyByOneInCart',
+                        type: 'POST',
+                        data: { cartId: cartId },
+                        success: function () {
+                            qtySpan.text(currentQty - 1);
+                            updateQtyControlsBasedOnRole();
+                        }
+                    });
                 }
             });
         });
-
-
-        $(document).on("click", ".minus", function () {
-
-            var cartId = $(this).data("id");
-            var qtySpan = $(this).siblings(".qty-display");
-            var currentQty = parseInt(qtySpan.text());
-
-            if (currentQty <= 1) {
-                // remove card when qty = 0
-                $.ajax({
-                    url: '/CartControllercs/DecreaseQtyByOneInCart',
-                    type: 'POST',
-                    data: { cartId: cartId },
-                    success: function () {
-                        qtySpan.closest(".card").remove(); // remove row
-                    }
-                });
-            } else {
-                $.ajax({
-                    url: '/CartControllercs/DecreaseQtyByOneInCart',
-                    type: 'POST',
-                    data: { cartId: cartId },
-                    success: function () {
-                        qtySpan.text(currentQty - 1);
-                    }
-                });
-            }
-        });
-
     </script>
-    }
+}

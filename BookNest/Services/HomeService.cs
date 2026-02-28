@@ -106,5 +106,26 @@ namespace BookNest.Services
             return computedHash.SequenceEqual(hash);
         }
 
+        public async Task<UserRoleEnum> GetUserRole(string username)
+        {
+            var user = await _repo.GetUserByUsername(username);
+            if (user == null)
+                return UserRoleEnum.UserNotFound;
+            var roles = await _repo.GetAllRoles(user.Fk_RoleId);
+            if (roles == null)
+                return UserRoleEnum.RoleNotFound;
+            UserRoleEnum roleMessage = roles.RoleId switch
+            {
+                1 => UserRoleEnum.Student,
+                2 => UserRoleEnum.Faculty,
+                3 => UserRoleEnum.Librarian,
+                4 => UserRoleEnum.Admin,
+                _ => UserRoleEnum.InvalidRole
+            };
+
+            return roleMessage;
+
+        }
+
     }
 }

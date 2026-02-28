@@ -11,6 +11,7 @@ namespace BookNest.Interfaces
         public Task<LoginResultDTO> Login(LoginDTO dto);
         public Task<PasswordChange> EditPasssword(ForgetPassword dto);
         public Task<User?> GetUserByUsername(string username);
+        public Task<UserRoleEnum> GetUserRole(string username);
 
     }
 }

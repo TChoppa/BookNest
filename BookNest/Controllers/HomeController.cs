@@ -144,6 +144,13 @@ namespace BookNest.Controllers
             ViewBag.roleId = users.Fk_RoleId;
             return View();
         }
+        [HttpGet]
+        public async Task<IActionResult> GetUserRole()
+        {
+            var username = HttpContext.Session.GetString("UserName");
+            var res = await _HomeService.GetUserRole(username);
+            return Ok(res.ToString());
+        }
         public IActionResult Privacy()
         {
             return View();
