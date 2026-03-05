@@ -9,10 +9,12 @@ namespace BookNest.Services
     {
         private readonly IOrderRepository _orderRepo;
         private readonly ICartRepository _cartRepo;
-        public OrderService(IOrderRepository orderRepository, ICartRepository cartRepository)
+        private readonly IBookRepository _bookRepo;
+        public OrderService(IOrderRepository orderRepository, ICartRepository cartRepository , IBookRepository bookRepository)
         {
             _orderRepo = orderRepository;
             _cartRepo = cartRepository;
+            _bookRepo = bookRepository;
         }
 
         public async Task<string> ConfirmOrder(string username)
@@ -40,6 +42,17 @@ namespace BookNest.Services
                     Title=cartItem.Title
                 };
                 await _orderRepo.AddOrderItem(orderItemList);
+                 var book = await _bookRepo.GetBookByIds(cartItem.BookId);
+
+                if (book != null)
+                {
+                    book.AvailableQuantity -= cartItem.AvailableQuantity;
+
+                    if (book.AvailableQuantity < 0)
+                        book.AvailableQuantity = 0; // safety
+
+                    await _cartRepo.UpdateBook(book);
+                }
             }
             await _cartRepo.DeleteCartList(cart);
             return orderList.OrderCode;

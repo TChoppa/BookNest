@@ -6,5 +6,6 @@ namespace BookNest.Interfaces
     {
         public Task<List<Book>> GetYear1Books(string branch, string year);
         public Task<Cart?> GetBookById(int bookId, string userName);
+        public Task<Book> GetBookByIds(int bookId);
     }
 }

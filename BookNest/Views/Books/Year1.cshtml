@@ -117,6 +117,14 @@
             background: rgba(0,0,0,0.6);
         }
 
+        /* Disabled appearance for add when out of stock */
+        .add-overlay .add-btn[disabled] {
+            background: rgba(0,0,0,0.15);
+            color: rgba(255,255,255,0.6);
+            border-color: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+        }
+
     /* Transparent qty controls */
     .qty-controls {
         display: flex;
@@ -210,13 +218,11 @@
     <span id="cartBadge" class="cart-badge">0</span>
 </a>
 
-
-
 @section Scripts {
     <script>
 
          $(function () {
-             function updateQtyControlsBasedOnRole() {
+            function updateQtyControlsBasedOnRole() {
             $.ajax({
                             url: '/Home/GetUserRole',
                             type: 'GET',
@@ -283,7 +289,7 @@
             }
         }
             updateCartUIFromServer();
-             $('#selBranch').on('change', function () {
+            $('#selBranch').on('change', function () {
 
             $('#branchWrapper')
                 .removeClass('branch-center-wrapper')
@@ -324,9 +330,10 @@
                                      data-title="${book.title}"
                                      data-qty="${book.cartQty}"
                                      data-imageurl="${book.imageUrl}"
-                                     data-year="${book.year}">
+                                     data-year="${book.year}"
+                                     data-available="${book.availableQuantity}">
 
-                                    <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}">ADD</button>
+                                    <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}" ${book.availableQuantity <= 0 ? 'disabled' : ''}>${book.availableQuantity <= 0 ? 'OUT' : 'ADD'}</button>
 
                                     <div class="qty-controls ${book.cartQty > 0 ? '' : 'd-none'}">
                                         <button class="btn minus">−</button>
@@ -341,6 +348,26 @@
                     });
 
                     $("#imageRow").html(html);
+
+                    // After DOM insertion apply availability rules
+                    $(".cart-controls").each(function () {
+                        const container = $(this);
+                        const avail = Number(container.data("available"));
+                        const qty = Number(container.find(".qty").text()) || 0;
+
+                        // If no stock and nothing in cart -> ensure ADD is disabled and labelled OUT
+                        if (avail <= 0 && qty === 0) {
+                            container.find(".add-btn").prop("disabled", true).text("OUT");
+                        }
+
+                        // If cart already contains items and stock is depleted, disable the plus button
+                        if (qty >= avail) {
+                            container.find(".plus").prop("disabled", true);
+                        } else {
+                            container.find(".plus").prop("disabled", false);
+                        }
+                    });
+
                     updateCartUIFromServer();
                     updateQtyControlsBasedOnRole();
                         },
@@ -352,7 +379,10 @@
 
             let cart = {};
 
+            // Prevent handling clicks on disabled add buttons
             $(document).on("click", ".add-btn", function () {
+                if ($(this).prop("disabled")) return;
+
                 const container = $(this).closest(".cart-controls");
                 const title = container.data("title");
 
@@ -361,6 +391,12 @@
 
                 $(this).addClass("d-none");
                 container.find(".qty-controls").removeClass("d-none");
+
+                // If adding reduces available stock to zero, disable the plus button
+                const avail = Number(container.data("available"));
+                if (1 >= avail) {
+                    container.find(".plus").prop("disabled", true);
+                }
 
                 var itemDetails = {
                     BookId: container.data("id"),
@@ -377,11 +413,10 @@
                     data: JSON.stringify(itemDetails),
                     contentType: "application/json",
                     success: function () {
-            // ✅ runs AFTER server updates cart
-             updateQtyControlsBasedOnRole();
-            updateCartUIFromServer();
-
-        }
+                        // ✅ runs AFTER server updates cart
+                        updateQtyControlsBasedOnRole();
+                        updateCartUIFromServer();
+                    }
                 });
                 updateCartUIFromServer();
             });
@@ -391,12 +426,27 @@
             const container = $(this).closest(".cart-controls");
             const title = container.data("title");
 
+            // respect available stock
+            const avail = Number(container.data("available"));
             if (!cart[title]) cart[title] = 0;
+
+            // Do not increment past available stock
+            if (cart[title] >= avail) {
+                container.find(".plus").prop("disabled", true);
+                return;
+            }
 
             cart[title]++;
 
             container.find(".qty").text(cart[title]);
             container.find(".minus").prop("disabled", false); // enable minus
+
+            // Disable plus if reached available
+            if (cart[title] >= avail) {
+                container.find(".plus").prop("disabled", true);
+            } else {
+                container.find(".plus").prop("disabled", false);
+            }
 
             var itemDetails = {
                 BookId: container.data("id"),
@@ -440,6 +490,13 @@
                 container.find(".add-btn").removeClass("d-none");
 
                 delete cart[title]; // remove from JS cart
+            }
+
+            // Re-enable plus if stock allows
+            const avail = Number(container.data("available"));
+            const qtyNow = Number(container.find(".qty").text()) || 0;
+            if (qtyNow < avail) {
+                container.find(".plus").prop("disabled", false);
             }
 
             var itemDetails = {
