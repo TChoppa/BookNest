@@ -1,4 +1,5 @@
 ﻿using BookNest.DatabaseContext;
+using BookNest.DTO;
 using BookNest.Interfaces;
 using BookNest.IServices;
 using BookNest.Models;
@@ -28,7 +29,8 @@ namespace BookNest.Services
                 Guid.NewGuid().ToString().Substring(0, 6),
                 Username= username, 
                 OrderDate = DateTime.Now,  
-                Status  = "Pending"
+                Status  = "Pending",
+                ReturnDate = DateTime.Now.AddDays(7)
             };
             await _orderRepo.AddOrder(orderList);
             foreach(var cartItem in cart)
@@ -39,7 +41,8 @@ namespace BookNest.Services
                     BookId = cartItem.BookId,
                     ImageUrl = cartItem.ImageUrl,
                     Quantity = cartItem.AvailableQuantity,
-                    Title=cartItem.Title
+                    Title = cartItem.Title
+                    
                 };
                 await _orderRepo.AddOrderItem(orderItemList);
                  var book = await _bookRepo.GetBookByIds(cartItem.BookId);
@@ -62,5 +65,38 @@ namespace BookNest.Services
         {
             return await _orderRepo.GetOrderByUsername(username);
         }
+        public async Task<List<OrderIItemDTO>> GetOrderItemsByUsername(string username)
+        {
+            var orders = await _orderRepo.GetOrderByUsername(username);
+            var orderItemDtos = new List<OrderIItemDTO>();
+            if (orders == null || !orders.Any())
+                return orderItemDtos;
+
+            foreach (var order in orders)
+            {
+                var orderItems = await _orderRepo.GetOrderItemByUsername(order.OrderId);
+                if (orderItems == null || !orderItems.Any())
+                    continue;
+
+                foreach (var orderItem in orderItems)
+                {
+                    var orderItemDto = new OrderIItemDTO
+                    {
+                        OrderCode = order.OrderCode,
+                        ImageUrl = orderItem.ImageUrl ?? string.Empty,
+                        Title = orderItem.Title,
+                        OrderDate = order.OrderDate,
+                        Quantity = orderItem.Quantity,
+                        ReturnDate = order.ReturnDate,
+                        FineAmount = order.FineAmount,
+                        Status=order.Status
+                    };
+                    orderItemDtos.Add(orderItemDto);
+                }
+            }
+
+            return orderItemDtos;
+        }
+
     }
 }

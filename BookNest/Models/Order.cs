@@ -10,5 +10,7 @@ namespace BookNest.Models
         public string Username { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; } = DateTime.Now;
         public string Status { get; set; } = "Pending"; // Pending / Issued
+        public DateTime? ReturnDate { get; set; } // expected return date
+        public decimal FineAmount { get; set; } = 0; // late fee if applicable
     }
 }

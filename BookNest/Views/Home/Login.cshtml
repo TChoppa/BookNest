@@ -14,8 +14,8 @@
 
     <style>
         /* =======================
-                               BACKGROUND
-                            ======================= */
+                                       BACKGROUND
+                                    ======================= */
         body {
             min-height: 100vh;
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -28,8 +28,8 @@
         }
 
         /* =======================
-                               HEADER
-                            ======================= */
+                                       HEADER
+                                    ======================= */
         .gift-picker-wrapper {
             width: 100%;
             display: flex;
@@ -46,8 +46,8 @@
         }
 
         /* =======================
-                               CARD
-                            ======================= */
+                                       CARD
+                                    ======================= */
         .card {
             background: #ffffff !important;
             border-radius: 16px;
@@ -66,8 +66,8 @@
         }
 
         /* =======================
-                               FORM CONTROLS
-                            ======================= */
+                                       FORM CONTROLS
+                                    ======================= */
         .form-control {
             background: #f9f9f9;
             border: 1px solid #ccc;
@@ -87,8 +87,8 @@
             }
 
         /* =======================
-                               CUSTOM SELECT ARROW
-                            ======================= */
+                                       CUSTOM SELECT ARROW
+                                    ======================= */
         .custom-select {
             appearance: none;
             -webkit-appearance: none;
@@ -113,8 +113,8 @@
         }
 
         /* =======================
-                               BUTTON
-                            ======================= */
+                                       BUTTON
+                                    ======================= */
         .btn-info {
             background: #0066cc;
             border: none;
@@ -132,8 +132,8 @@
             }
 
         /* =======================
-                               LINKS
-                            ======================= */
+                                       LINKS
+                                    ======================= */
         a {
             color: #0066cc;
             font-weight: 500;
@@ -145,8 +145,8 @@
             }
 
         /* =======================
-                               MESSAGES
-                            ======================= */
+                                       MESSAGES
+                                    ======================= */
         #msg {
             font-weight: 500;
             color: #cc0000;
@@ -156,11 +156,22 @@
             padding-top: 40px;
             padding-bottom: 40px;
         }
+
         @@media (min-width: 768px) {
             .col-md-6 {
                 flex: 0 0 auto;
                 width: 41%;
             }
+        }
+        /* small icon button next to password */
+        .pwd-toggle-btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            background: transparent;
+            border: 1px solid #ccc;
+            color: #333;
         }
     </style>
 </head>
@@ -185,8 +196,17 @@
                                        class="form-control" placeholder="Username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9]+" />
                             </div>
                             <div class="form-group mb-3">
-                                <input type="password" id="Password" name="Password"
-                                       class="form-control" placeholder="Password" required minlength="6" />
+                                <div class="input-group">
+                                    <input type="password" id="Password" name="Password"
+                                           class="form-control" placeholder="Password" required minlength="6" />
+                                    <button type="button" class="pwd-toggle-btn" id="togglePassword" aria-label="Toggle password visibility" title="Show password">
+                                        <!-- eye icon (visible) -->
+                                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z" />
+                                            <path d="M8 5.5A2.5 2.5 0 1 0 8 10a2.5 2.5 0 0 0 0-4.5z" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-group mb-3 text-end">
                                 <a href="@Url.Action("ForgetPassword", "Home")">Forget Password ?</a>
@@ -202,7 +222,7 @@
                             Don't  you have an account ?
                             <a href="@Url.Action("Register", "Home")" id="btnRegisterHide">Register</a>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -233,7 +253,7 @@
                         success: function (response) {
                             debugger;
 
-                            if (response.success) {                  
+                            if (response.success) {
                                 alert(response.message);
                                  window.location.href = '@Url.Action("Dashboard", "Home")';
                             }
@@ -252,10 +272,10 @@
                             }
                         },
                         error: function (xhr)
-                        { 
+                        {
                             try
-                            { 
-                                var response = JSON.parse(xhr.responseText); 
+                            {
+                                var response = JSON.parse(xhr.responseText);
                                 $("#msg")
                                     .removeClass("text-success")
                                     .addClass("text-danger")
@@ -265,13 +285,31 @@
                                     .delay(4000)
                                     .fadeOut(600);
                                      $("#Email").focus();
-                            } 
-                            catch 
-                            { 
+                            }
+                            catch
+                            {
                                 alert("Unexpected error occurred.");
                             } }
                     });
                 });
+
+            // toggle password visibility
+            $('#togglePassword').on('click', function () {
+                var $pwd = $('#Password');
+                var type = $pwd.attr('type') === 'password' ? 'text' : 'password';
+                $pwd.attr('type', type);
+
+                // update icon and title
+                if (type === 'text') {
+                    // eye-slash icon
+                    $('#eyeIcon').replaceWith('\n<svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">\n  <path d="M13.359 11.238C14.286 10.42 15 9.38 15 8c0-1.38-.714-2.42-1.641-3.238A9.953 9.953 0 0 0 8 3c-1.045 0-2.037.153-2.953.44L3.354 1.747A.5.5 0 0 0 2.646 2.354l12 12a.5.5 0 0 0 .708-.708l-1.999-1.999z"/>\n  <path d="M10.478 12.97A5.5 5.5 0 0 1 3.03 5.522L1.707 4.2A9.956 9.956 0 0 0 1 8c0 1.38.714 2.42 1.641 3.238A9.953 9.953 0 0 0 8 13c1.045 0 2.037-.153 2.953-.44l-.475-.59z"/>\n</svg>');
+                    $(this).attr('title', 'Hide password');
+                } else {
+                    // eye icon
+                    $('#eyeIcon').replaceWith('\n<svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">\n  <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>\n  <path d="M8 5.5A2.5 2.5 0 1 0 8 10a2.5 2.5 0 0 0 0-4.5z"/>\n</svg>');
+                    $(this).attr('title', 'Show password');
+                }
+            });
         });
 
     </script>

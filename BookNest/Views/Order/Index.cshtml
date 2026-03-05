@@ -1,0 +1,80 @@
+﻿@{
+   // ViewBag.Title = "My Orders";
+    ViewBag.PageTitle = "📚 Orders 📚";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // or null if you want standalone
+}
+@model List<BookNest.DTO.OrderIItemDTO>
+
+
+<h2>@ViewData["Title"]</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>              
+                <th>Book</th>
+                <th>Order Code</th>
+                <th>Quantity</th>
+                <th>Order Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th>Fine Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>                   
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            @if (!string.IsNullOrEmpty(order.ImageUrl))
+                            {
+                                <img src="@order.ImageUrl" alt="@order.Title"
+                                     style="width:60px;height:auto;object-fit:cover;border-radius:4px;" />
+                            }
+                            <span>@order.Title</span>
+                        </div>
+                    </td>
+                    <td> <span class="text-primary">@order.OrderCode</span></td>
+                    <td>@order.Quantity</td>
+                    <td>@order.OrderDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (order.ReturnDate.HasValue)
+                        {
+                            @order.ReturnDate.Value.ToString("yyyy-MM-dd")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </td>
+                    <td>
+                        @if ((order.Status ?? "").ToLowerInvariant() == "pending")
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Approved</span>
+                        }
+                    </td>
+                    <td>
+                        @if (order.FineAmount > 0)
+                        {
+                            <span class="text-danger">₹@order.FineAmount</span>
+                        }
+                        else
+                        {
+                            <span class="text-success"> 0</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
