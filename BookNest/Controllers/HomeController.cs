@@ -76,7 +76,8 @@ namespace BookNest.Controllers
                     if (dto == null)
                         return BadRequest(new { success = false, message = "Invalid user" });
                     var loginResult = await _HomeService.Login(dto);
-                    if(!loginResult.Success)
+                ViewBag.RoleName = loginResult.Role;
+                    if (!loginResult.Success)
                         return Unauthorized(new {success=false,message=loginResult.Message});
                     var claims = new List<Claim>()
                     {

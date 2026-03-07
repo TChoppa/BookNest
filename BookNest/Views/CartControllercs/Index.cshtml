@@ -23,8 +23,7 @@
         padding: 14px 20px;
         width: 90%;
         max-width: 420px;
-        margin: 1px auto;
-        border-radius: 16px;
+        margin: 228px auto;
         background: #ffffff;
         border: 1.5px solid #dbeafe;
         box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
@@ -90,6 +89,56 @@
             background: linear-gradient(135deg, #4338ca, #4f46e5);
             color: #fff;
         }
+    /* Glassy modal effect */
+    .card{
+        border-radius: 1.25rem;
+    }
+
+    .modal-content {
+        margin-left: 62px;
+        margin-top: 85px;
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.25); /* translucent white */
+        backdrop-filter: blur(12px); /* frosted glass blur */
+        -webkit-backdrop-filter: blur(12px); /* Safari support */
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3); /* matches your purple tone */
+        color: #111;
+    }
+
+    /* Modal header with gradient */
+    .modal-header {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: #fff;
+        border-bottom: none;
+        border-radius: 16px 16px 0 0;
+    }
+
+    /* Modal footer with subtle glass look */
+    .modal-footer {
+        background: #97999a;
+        backdrop-filter: blur(6px);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Close button styling */
+    .btn-close {
+        filter: invert(1);
+    }
+
+    /* OK button consistent with your theme */
+    #okBtn {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        border: none;
+        font-weight: 600;
+    }
+
+        #okBtn:hover {
+            background: linear-gradient(135deg, #4338ca, #4f46e5);
+        }
+
 </style>
 <div id="cartContainer">
 @if (Model != null && Model.Any())
@@ -133,10 +182,10 @@
                 <h5 class="modal-title">Order Confirmation</h5>
                 <button type="button" class="btn-close" id="closeCartBtn" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Your order has been confirmed</p>
-                <p>Order ID: <span id="orderId"></span></p>
-                <p>Please navigate to Order to check the items</p>
+            <div class="modal-body text-center fw-bold">
+                <p >Your order has been confirmed</p>
+                <p>Order ID: <span id="orderId" class="text-primary"></span></p>
+                <p class="text-muted">Click Ok , navigate to Orders</p>
             </div>
             <div class="modal-footer">
                 <button type="button" id="okBtn" class="btn btn-success">OK</button>
@@ -203,7 +252,7 @@
 
             // OK button redirect
             $("#okBtn").click(function () {
-                window.location.href = "/Order/Index";
+                window.location.href = "/Order/GetOrderByUsername";
             });
             $("#closeCartBtn").click(function () {
             // Remove all cart cards

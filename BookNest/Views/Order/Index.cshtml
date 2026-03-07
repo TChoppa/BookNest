@@ -4,9 +4,49 @@
     Layout = "~/Views/Shared/_Layout.cshtml"; // or null if you want standalone
 }
 @model List<BookNest.DTO.OrderIItemDTO>
-
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <h2>@ViewData["Title"]</h2>
+<div class="d-flex justify-content-end mb-3">
+    <input id="orderSearch" type="search" class="form-control form-control-sm" style="max-width:320px;"
+           placeholder="Search username or order code..." value="@(ViewBag.Search ?? String.Empty)" />
+</div>
+
+<style>
+    /* ensure delete buttons are clickable above any nearby overlays */
+    .delete-order-item, [id^="delete-order-"] {
+        position: relative;
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+    .disabled-delete {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    .badge {
+        display: inline-block;
+        width: 75px;
+        text-align: center;
+    }
+    .disabled-delete {
+        pointer-events: none; /* prevents click */
+        cursor: not-allowed; /* shows blocked cursor */
+         /* optional: faded look */
+    }
+    .delete-order-item {
+        font-size: 18px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .delete-order-item:hover {
+            transform: scale(1.2);
+            color: #b02a37;
+        }
+    /* defensive: ensure table rows are above unexpected overlays less than this z-index */
+    table.table { position: relative; z-index: 1; }
+</style>
 
 @if (Model == null || !Model.Any())
 {
@@ -24,9 +64,13 @@ else
                 <th>Return Date</th>
                 <th>Status</th>
                 <th>Fine Amount</th>
+                @if ((bool?)(ViewBag.IsUserView) == true)
+                {
+                    <th>Action</th>
+                }
             </tr>
         </thead>
-        <tbody>
+        <tbody id="ordersTbody">
             @foreach (var order in Model)
             {
                 <tr>                   
@@ -42,25 +86,29 @@ else
                     </td>
                     <td> <span class="text-primary">@order.OrderCode</span></td>
                     <td>@order.Quantity</td>
-                    <td>@order.OrderDate.ToString("yyyy-MM-dd")</td>
+                    <td>@order.OrderDate.ToString("yyyy-MM-dd hh:mm")</td>
                     <td>
                         @if (order.ReturnDate.HasValue)
                         {
-                            @order.ReturnDate.Value.ToString("yyyy-MM-dd")
+                            @order.ReturnDate.Value.ToString("yyyy-MM-dd hh:mm")
                         }
                         else
                         {
                             <span class="text-muted">Not set</span>
                         }
                     </td>
-                    <td>
+                    <td class="status-cell">
                         @if ((order.Status ?? "").ToLowerInvariant() == "pending")
                         {
                             <span class="badge bg-warning text-dark">Pending</span>
                         }
-                        else
+                        else if ((order.Status ?? "").ToLowerInvariant() == "approved")
                         {
                             <span class="badge bg-success">Approved</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary">Cleared</span>
                         }
                     </td>
                     <td>
@@ -73,8 +121,468 @@ else
                             <span class="text-success"> 0</span>
                         }
                     </td>
+                    @if ((bool?)(ViewBag.IsUserView) == true)
+                    {
+                        <td class="text-center">
+                            <button class="btn btn-link p-0 delete-order-item"
+                                    data-id="@order.OrderItemId"
+                                    title="Delete"
+                                    @( (order.Status ?? "").ToLowerInvariant() == "pending" ? "" : "disabled")>
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </td>
+                    }
                 </tr>
             }
         </tbody>
     </table>
 }
+
+@* Pagination controls *@
+@{
+    var page = (int?)(ViewBag.Page) ?? 1;
+    var pageSize = (int?)(ViewBag.PageSize) ?? 5;
+    var total = (int?)(ViewBag.TotalCount) ?? Model?.Count() ?? 0;
+    var start = (total == 0) ? 0 : ((page - 1) * pageSize + 1);
+    var end = page * pageSize > total ? total : page * pageSize;
+    var isUserView = (bool?)(ViewBag.IsUserView) ?? false;
+    string prevUrl, nextUrl;
+    if (isUserView)
+    {
+        prevUrl = Url.Action("GetOrderByUsername", "Order");
+        nextUrl = Url.Action("GetOrderByUsername", "Order");
+    }
+    else
+    {
+        prevUrl = Url.Action("GetAllOrders", "Order", new { page = Math.Max(1, page - 1), pageSize = pageSize, search = ViewBag.Search });
+        nextUrl = Url.Action("GetAllOrders", "Order", new { page = page + 1, pageSize = pageSize, search = ViewBag.Search });
+    }
+    var prevDisabled = page == 1 ? "disabled" : string.Empty;
+    var nextDisabled = page * pageSize >= total ? "disabled" : string.Empty;
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <div id="showingText">
+        @($"Showing {start} - {end} of {total} entries")
+    </div>
+    <div>
+        <button id="prevBtn" class="btn btn-primary btn-sm @prevDisabled" type="button">Prev</button>
+        <button id="nextBtn" class="btn btn-primary btn-sm @nextDisabled" type="button">Next</button>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+    let input = document.getElementById('orderSearch');
+    let currentPage = @( (int?)(ViewBag.Page) ?? 1 );
+    const pageSize = @( (int?)(ViewBag.PageSize) ?? 5 );
+    var isUserView = @(((bool?)(ViewBag.IsUserView) == true).ToString().ToLower());
+
+    /* ---------------- DELETE ORDER ---------------- */
+        $(document).on("click", ".delete-order-item", function () {
+        var button = $(this);
+
+        // 🚫 Block if disabled
+        if (button.hasClass("disabled-delete")) {
+            return; // do nothing
+        }
+
+        var id = button.attr("data-id");
+        if (!confirm("Are you sure you want to delete this order?")) return;
+
+        $.ajax({
+            url: "/Order/DeleteOrderItem",
+            type: "POST",
+            data: { id: id },
+            success: function (response) {
+                if (response.success) {
+                    if ($("#ordersTbody tr").length === 1 && currentPage > 1) {
+                        currentPage--;
+                    }
+                    fetchData(input ? input.value : '', currentPage);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Something went wrong while deleting.");
+            }
+        });
+    }); 
+
+
+    /* ---------------- FETCH DATA ---------------- */
+
+    async function fetchData(q, page){
+
+        const endpoint = isUserView ? '/Order/SearchOrdersForUser' : '/Order/SearchOrders';
+
+        const url = `${endpoint}?search=${encodeURIComponent(q||'')}&page=${page}&pageSize=${pageSize}`;
+
+        try{
+
+            const res = await fetch(url);
+            if(!res.ok) return;
+
+            const data = await res.json();
+
+            renderRows(data.orders || []);
+
+            const total = data.total || 0;
+            currentPage = data.page || page;
+
+            const start = total===0 ? 0 : ((currentPage-1)*pageSize+1);
+            const end = Math.min(currentPage*pageSize, total);
+
+            $("#showingText").text(`Showing ${start} - ${end} of ${total} entries`);
+
+            updateButtons(total);
+
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+
+
+    /* ---------------- RENDER ROWS ---------------- */
+
+    function renderRows(items){
+
+        const tbody = document.getElementById('ordersTbody');
+
+        if(!tbody) return;
+
+        tbody.innerHTML = items.map(o => {
+
+            const imageUrl = o.imageUrl || o.ImageUrl || '';
+            const title = o.title || o.Title || '';
+            const orderCode = o.orderCode || o.OrderCode || '';
+            const quantity = o.quantity || o.Quantity || 0;
+            const orderDate = o.orderDate || o.OrderDate || null;
+            const returnDate = o.returnDate || o.ReturnDate || null;
+            const statusRaw = (o.status || o.Status || '').toLowerCase();
+            const fineAmount = (o.fineAmount !== undefined ? o.fineAmount : o.FineAmount) || 0;
+
+            const img = imageUrl ? `<img src="${imageUrl}" style="width:60px;height:auto;object-fit:cover;border-radius:4px;"/>` : '';
+
+            // const status = statusRaw === 'pending'
+            //     ? '<span class="badge bg-warning text-dark">Pending</span>'
+            //     : '<span class="badge bg-success">Approved</span>';
+           let status = '';
+            if(statusRaw === "pending"){
+                status = '<span class="badge bg-warning text-dark">Pending</span>';
+            }
+            else if(statusRaw === "approved"){
+                status = '<span class="badge bg-success">Approved</span>';
+            }
+            else{
+                status = '<span class="badge bg-primary">Cleared</span>';
+            }
+            const fine = (fineAmount && fineAmount>0) ? `₹${fineAmount}` : '0';
+
+            function pad(n){ return n<10 ? '0'+n : n }
+
+            function fmt(dt){
+                if(!dt) return '';
+                const d = new Date(dt);
+                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+
+            const orderItemId = o.orderItemId || o.OrderItemId || '';
+
+            return `
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        ${img}
+                        <span>${title}</span>
+                    </div>
+                </td>
+                <td><span class="text-primary">${orderCode}</span></td>
+                <td>${quantity}</td>
+                <td>${orderDate ? fmt(orderDate) : ''}</td>
+                <td>${returnDate ? fmt(returnDate) : '<span class="text-muted">Not set</span>'}</td>
+                <td>${status}</td>
+                <td><span class="text-danger">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fine}</span></td>
+                    ${ isUserView ? `<td>
+        &nbsp;&nbsp;<i class="bi bi-trash-fill delete-order-item
+                ${statusRaw === 'pending' ? 'text-danger' : 'text-muted disabled-delete'}"
+            data-id="${orderItemId}"
+            title="${statusRaw === 'pending' ? 'Delete' : 'Cannot delete approved order'}">
+        </i>
+    </td>
+    ` : '' }
+            </tr>`;
+        }).join('');
+
+    }
+
+
+    /* ---------------- UPDATE PAGINATION BUTTONS ---------------- */
+
+    function updateButtons(total){
+
+        const prev = document.getElementById('prevBtn');
+        const next = document.getElementById('nextBtn');
+
+        if(prev){
+
+            const disablePrev = currentPage <= 1;
+
+            prev.disabled = disablePrev;
+            prev.classList.toggle('disabled', disablePrev);
+
+        }
+
+        if(next){
+
+            const disableNext = currentPage * pageSize >= total;
+
+            next.disabled = disableNext;
+            next.classList.toggle('disabled', disableNext);
+
+        }
+
+    }
+
+
+    /* ---------------- SEARCH ---------------- */
+
+    // if(input){
+
+    //     let timeout;
+
+    //     input.addEventListener('input', function(e){
+
+    //         const q = e.target.value;
+
+    //         clearTimeout(timeout);
+
+    //         timeout = setTimeout(() => {
+
+    //             fetchData(q, 1);
+
+    //         }, 300);
+
+    //     });
+
+    // }
+
+        /* ---------------- SEARCH ---------------- */
+
+    if(input){
+
+        let timeout;
+
+        function handleSearch(e){
+
+            const q = e.target.value.trim();   // remove spaces from copy-paste
+
+            clearTimeout(timeout);
+
+            timeout = setTimeout(() => {
+
+                fetchData(q, 1);
+
+            }, 300);
+        }
+
+        // works for typing
+        input.addEventListener('input', handleSearch);
+
+        // works for copy paste
+        input.addEventListener('paste', function(){
+            setTimeout(() => handleSearch({ target: input }), 0);
+        });
+
+    }
+    /* ---------------- PAGINATION ---------------- */
+
+    document.getElementById('prevBtn')?.addEventListener('click', () => {
+
+        if(currentPage > 1){
+
+            fetchData(input ? input.value : '', currentPage - 1);
+
+        }
+
+    });
+
+    document.getElementById('nextBtn')?.addEventListener('click', () => {
+
+        fetchData(input ? input.value : '', currentPage + 1);
+
+    });
+
+
+    /* ---------------- INITIAL LOAD ---------------- */
+
+    document.addEventListener('DOMContentLoaded', function(){
+
+        fetchData(input ? input.value : '', currentPage);
+
+    });
+
+</script>
+
+@* <script>
+
+    
+    $(document).on("click", ".delete-order-item", function () {
+        debugger;
+        var button = $(this);
+    var id = $(this).attr("data-id");   // safer than .data()
+     let currentPage = @( (int?)(ViewBag.Page) ?? 1 );
+     console.log("Delete id:", id);
+
+        if (!confirm("Are you sure you want to delete this order?"))
+            return;
+
+        $.ajax({
+            url: "/Order/DeleteOrderItem",
+            type: "POST",
+            data: { id: id },
+
+            success: function (response) {
+
+                if (response.success) {
+                    debugger;
+                    // remove row instantly
+                    button.closest("tr").fadeOut(400, function () {
+                    $(this).remove();
+                });
+                     fetchData(input ? input.value : '', currentPage);
+
+                }
+                else {
+                    alert(response.message);
+                }
+
+            },
+
+            error: function () {
+                alert("Something went wrong while deleting.");
+            }
+
+        });
+
+    });
+
+
+
+    (function(){
+        const input = document.getElementById('orderSearch');
+        const tbody = document.getElementById('ordersTbody');
+        const showingNode = document.getElementById('showingText');
+        let timeout;
+        let currentPage = @( (int?)(ViewBag.Page) ?? 1 );
+        const pageSize = @( (int?)(ViewBag.PageSize) ?? 5 );
+        var isUserView = @(((bool?)(ViewBag.IsUserView) == true).ToString().ToLower());
+
+       
+
+        async function fetchData(q, page){
+            const endpoint = isUserView ? '/Order/SearchOrdersForUser' : '/Order/SearchOrders';
+            const url = `${endpoint}?search=${encodeURIComponent(q||'')}&page=${page}&pageSize=${pageSize}`;
+            try{
+                const res = await fetch(url);
+                if(!res.ok) return;
+                const data = await res.json();
+                renderRows(data.orders || []);
+                const total = data.total || 0;
+                currentPage = data.page || page;
+                const start = total===0?0:((currentPage-1)*pageSize+1);
+                const end = Math.min(currentPage*pageSize, total);
+                if(showingNode) showingNode.textContent = `Showing ${start} - ${end} of ${total} entries`;
+                updateButtons(total);
+            } catch(err){ console.error(err); }
+        }
+
+        function renderRows(items){
+            if(!tbody) return;
+            tbody.innerHTML = items.map(o => {
+                const imageUrl = o.imageUrl || o.ImageUrl || '';
+                const title = o.title || o.Title || '';
+                const orderCode = o.orderCode || o.OrderCode || '';
+                const quantity = o.quantity || o.Quantity || 0;
+                const orderDate = o.orderDate || o.OrderDate || null;
+                const returnDate = o.returnDate || o.ReturnDate || null;
+                const statusRaw = (o.status || o.Status || '').toLowerCase();
+                const fineAmount = (o.fineAmount !== undefined ? o.fineAmount : o.FineAmount) || 0;
+
+                const img = imageUrl ? `<img src="${imageUrl}" style="width:60px;height:auto;object-fit:cover;border-radius:4px;"/>` : '';
+                const status = statusRaw === 'pending' ? '<span class="badge bg-warning text-dark">Pending</span>' : '<span class="badge bg-success">Approved</span>';
+                const fine = (fineAmount && fineAmount>0) ? `₹${fineAmount}` : '0';
+                function pad(n){ return n<10 ? '0'+n : n }
+                function fmt(dt){ if(!dt) return ''; const d = new Date(dt); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}` }
+
+                const orderItemId = o.orderItemId || o.OrderItemId || '';
+                return `<tr>
+                    <td><div style="display:flex; align-items:center; gap:10px;">${img}<span>${title}</span></div></td>
+                    <td><span class="text-primary">${orderCode}</span></td>
+                    <td>${quantity}</td>
+                    <td>${orderDate ? fmt(orderDate) : ''}</td>
+                    <td>${returnDate ? fmt(returnDate) : '<span class="text-muted">Not set</span>'}</td>
+                    <td>${status}</td>
+                    <td>${fine}</td>
+                    ${ isUserView ? `<td><button class="btn btn-sm btn-danger delete-order-item" data-id="${orderItemId}">Delete</button></td>` : '' }
+                </tr>`;
+            }).join('');
+           
+            // add delegated handler on tbody as a fallback (catches clicks that bubble)
+            const tbodyEl = document.getElementById('ordersTbody');
+            if(tbodyEl && !tbodyEl._deleteDelegated){
+                tbodyEl.addEventListener('click', function(ev){
+                    const btn = ev.target.closest && ev.target.closest('.delete-order-item');
+                    if(!btn) return;
+                    // let the per-button handler handle it; but if not present, call global
+                    const id = btn.getAttribute('data-id') || btn.getAttribute('data-orderitemid');
+                    if(id){
+                        // prevent double-handling
+                        ev.preventDefault();
+                        window.deleteOrderItem(id);
+                    }
+                });
+                tbodyEl._deleteDelegated = true;
+            }
+        }
+
+        function updateButtons(total){
+            const prev = document.getElementById('prevBtn');
+            const next = document.getElementById('nextBtn');
+            if(prev) {
+                const shouldDisablePrev = currentPage <= 1;
+                prev.disabled = shouldDisablePrev;
+                // also toggle the bootstrap 'disabled' styling class so it looks enabled/disabled correctly
+                prev.classList.toggle('disabled', shouldDisablePrev);
+                prev.setAttribute('aria-disabled', shouldDisablePrev ? 'true' : 'false');
+            }
+            if(next) {
+                const shouldDisableNext = currentPage * pageSize >= total;
+                next.disabled = shouldDisableNext;
+                next.classList.toggle('disabled', shouldDisableNext);
+                next.setAttribute('aria-disabled', shouldDisableNext ? 'true' : 'false');
+            }
+        }
+
+        if(input){
+            input.addEventListener('input', function(e){
+                const q = e.target.value;
+                clearTimeout(timeout);
+                timeout = setTimeout(()=> fetchData(q, 1), 300);
+            });
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        if(prevBtn) prevBtn.addEventListener('click', ()=> { if(currentPage>1) fetchData(input ? input.value : '', currentPage-1); });
+        if(nextBtn) nextBtn.addEventListener('click', ()=> fetchData(input ? input.value : '', currentPage+1));
+
+        // initial fetch to sync UI (keeps server-rendered rows as fallback)
+        document.addEventListener('DOMContentLoaded', function(){ fetchData(input ? input.value : '', currentPage); });
+    })();
+</script> *@
+

@@ -12,5 +12,8 @@ namespace BookNest.Models
         public string Status { get; set; } = "Pending"; // Pending / Issued
         public DateTime? ReturnDate { get; set; } // expected return date
         public decimal FineAmount { get; set; } = 0; // late fee if applicable
+        public bool Action { get; set; }
+        public string ReturnStatus { get; set; } = "NA";
+
     }
 }

@@ -131,7 +131,14 @@
             .hamburger {
                 display: block;
             }
+
+           
+
+            
         }
+         .logout  {
+                margin-top: 17.5rem !important;
+            }
     </style>
 </head>
 
@@ -180,12 +187,17 @@
                         </div>
                     </div>
                 </li>
-
+               
                 <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-gear"></i> ClubHost</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("ViewCart", "CartControllercs")"><i class="bi bi-cart"></i> Cart</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("GetOrderByUsername", "Order")"><i class="bi bi-box"></i> Orders</a></li>
-                <li class="nav-item mt-5"><a class="nav-link" href="#"><i class="bi bi-gear"></i> Settings</a></li>
-                <li class="nav-item mt-2"><a class="nav-link text-danger" href="@Url.Action("Login", "Home")"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                @if (User.IsInRole("Librarian"))
+                {
+                    <li class="nav-item"><a class="nav-link" href="@Url.Action("GetAllOrders", "Order")"><i class="bi bi-box"></i> UsersOrderList</a></li>
+                }
+
+               @*  <li class="nav-item mt-5"><a class="nav-link" href="#"><i class="bi bi-gear"></i> Settings</a></li> *@
+                <li class="nav-item mt-2 logout" id="logout"><a class="nav-link text-danger" href="@Url.Action("Login", "Home")"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
 
             </ul>
         </nav>
@@ -209,7 +221,7 @@
 
     <script>
         $(document).ready(function () {
-
+            console.log("RoleName from ViewBag: '@ViewBag.RoleName'");
             var currentUrl = window.location.pathname.toLowerCase();
 
             // Highlight active link

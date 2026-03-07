@@ -1,0 +1,466 @@
+﻿@{
+    ViewBag.PageTitle = "📚 Orders 📚";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model List<BookNest.DTO.OrderIItemDTO>
+
+<style>
+    /* Toggle styles */
+    .form-check-input.toggle-active {
+        background-color: whitesmoke;
+        border-color: #dc3545;
+    }
+
+        .form-check-input.toggle-active:checked {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+    .status-cell {
+        cursor: pointer;
+    }
+
+    .return-status-cell {
+        cursor: pointer;
+    }
+    /* Badge fixed width */
+    .badge {
+        display: inline-block;
+        width: 75px;
+        text-align: center;
+    }
+
+    /* Optional: return status cell */
+    .customsize {
+        width: 75px;
+    }
+</style>
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="d-flex justify-content-end mb-3">
+    <input id="orderSearch" type="search" class="form-control form-control-sm" style="max-width:320px;"
+           placeholder="Search username or order code..." value="@(ViewBag.Search ?? String.Empty)" />
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Title</th>
+                <th>Book</th>
+                <th>Order Code</th>
+                <th>Quantity</th>
+                <th>Order Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th>Fine Amount</th>
+                <th>Action</th>
+                <th>Return Status</th>
+            </tr>
+        </thead>
+        <tbody id="ordersTbody">
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>@order.Username</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            @if (!string.IsNullOrEmpty(order.ImageUrl))
+                            {
+                                <img src="@order.ImageUrl" alt="@order.Title"
+                                     style="width:60px;height:auto;object-fit:cover;border-radius:4px;" />
+                            }
+                        </div>
+                    </td>
+                    <td>@order.Title</td>
+                    <td><span class="text-primary">@order.OrderCode</span></td>
+                    <td>@order.Quantity</td>
+                    <td>@order.OrderDate.ToString("yyyy-MM-dd hh:mm")</td>
+                    <td>
+                        @if (order.ReturnDate.HasValue)
+                        {
+                            @order.ReturnDate.Value.ToString("yyyy-MM-dd hh:mm")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </td>
+                    <td class="status-cell">
+                        @if ((order.Status ?? "").ToLowerInvariant() == "pending")
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if ((order.Status ?? "").ToLowerInvariant() == "approved")
+                        {
+                            <span class="badge bg-success">Approved</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary">Cleared</span>
+                        }
+                    </td>
+                    <td>
+                        @if (order.FineAmount > 0)
+                        {
+                            <span class="text-danger">₹@order.FineAmount</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger">0</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input toggle-active"
+                                   type="checkbox"
+                                   data-id="@order.OrderItemId"
+                                   @(order.Action ? "checked disabled" : "")>
+                        </div>
+                    </td>
+                    <td class="return-status-cell" data-id="@order.OrderItemId">
+                        @if ((order.ReturnStatus ?? "").ToLowerInvariant() == "pending")
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if ((order.ReturnStatus ?? "").ToLowerInvariant() == "returned")
+                        {
+                            <span class="badge bg-success">Returned</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">NA</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@* Pagination *@
+@{
+    var page = (int?)(ViewBag.Page) ?? 1;
+    var pageSize = (int?)(ViewBag.PageSize) ?? 5;
+    var total = (int?)(ViewBag.TotalCount) ?? Model?.Count() ?? 0;
+}
+<div class="d-flex justify-content-between align-items-center">
+    <div id="showingText">@($"Showing {(total == 0 ? 0 : ((page - 1) * pageSize + 1))} - {(page * pageSize > total ? total : page * pageSize)} of {total} entries")</div>
+    <div>
+        <button id="prevBtn" class="btn btn-primary btn-sm @(page == 1 ? "disabled" : "")">Prev</button>
+        <button id="nextBtn" class="btn btn-primary btn-sm @(page* pageSize>=total?"disabled":"")">Next</button>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    (function(){
+        const input = document.getElementById('orderSearch');
+        const tbody = document.getElementById('ordersTbody');
+        const showingNode = document.getElementById('showingText');
+        let timeout;
+        let currentPage = @(page);
+        const pageSize = @(pageSize);
+        var isUserView = @(((bool?)(ViewBag.IsUserView) == true).ToString().ToLower());
+
+        function pad(n){ return n<10 ? '0'+n : n }
+        function fmt(dt){
+            if(!dt) return '';
+            const d = new Date(dt);
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+            function renderRows(items){
+        if(!tbody) return;
+
+        tbody.innerHTML = items.map(o=>{
+
+            const imageUrl = o.imageUrl || '';
+            const title = o.title || '';
+            const orderCode = o.orderCode || '';
+            const quantity = o.quantity || 0;
+            const orderDate = o.orderDate || null;
+            const returnDate = o.returnDate || null;
+            const statusRaw = (o.status || '').toLowerCase();
+            const fineAmount = o.fineAmount || 0;
+            const orderItemId = o.orderItemId || '';
+            const returnStatusRaw = (o.returnStatus || '').toLowerCase();
+            const action = o.action === true;
+            const username = o.username || 'Unknown';
+
+            const img = imageUrl
+                ? `<img src="${imageUrl}" style="width:60px;height:auto;object-fit:cover;border-radius:4px;"/>`
+                : '';
+
+            // Status Badge
+            let statusBadge = '';
+            if(statusRaw === "pending"){
+                statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+            }
+            else if(statusRaw === "approved"){
+                statusBadge = '<span class="badge bg-success">Approved</span>';
+            }
+            else{
+                statusBadge = '<span class="badge bg-primary">Cleared</span>';
+            }
+
+            // Return Status Badge
+            let returnStatusBadge = '';
+            if(returnStatusRaw === "pending"){
+                returnStatusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+            }
+            else if(returnStatusRaw === "returned"){
+                returnStatusBadge = '<span class="badge bg-success">Returned</span>';
+            }
+            else{
+                returnStatusBadge = '<span class="badge bg-secondary">NA</span>';
+            }
+
+            const fine = fineAmount > 0 ? `₹${fineAmount}` : '0';
+            const titleText = returnStatusRaw === "pending"
+                ? "Double click to clear record"
+                : "";
+            return `
+            <tr data-id="${orderItemId}">
+
+                <td>${username}</td>
+
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${img}
+                    </div>
+                </td>
+
+                <td>${title}</td>
+
+                <td>
+                    <span class="text-primary">${orderCode}</span>
+                </td>
+
+                <td>${quantity}</td>
+
+                <td>${orderDate ? fmt(orderDate) : ''}</td>
+
+                <td>
+                    ${returnDate ? fmt(returnDate) : '<span class="text-muted">Not set</span>'}
+                </td>
+
+                <td class="status-cell">
+                    ${statusBadge}
+                </td>
+
+                <td>
+                    <span class="text-danger">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fine}</span>
+                </td>
+
+                <td>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input toggle-active"
+                            type="checkbox"
+                            data-id="${orderItemId}"
+                            ${action ? 'checked disabled' : ''}>
+                    </div>
+                </td>
+
+                <td class="return-status-cell customsize" data-id="${orderItemId}"  title="${titleText}">
+                    ${returnStatusBadge}
+                </td>
+
+            </tr>`;
+
+        }).join('');
+    }
+    //     function renderRows(items){
+    //         if(!tbody) return;
+
+    //         tbody.innerHTML = items.map(o=>{
+    //             const imageUrl = o.imageUrl || '';
+    //             const title = o.title || '';
+    //             const orderCode = o.orderCode || '';
+    //             const quantity = o.quantity || 0;
+    //             const orderDate = o.orderDate || null;
+    //             const returnDate = o.returnDate || null;
+    //             const statusRaw = (o.status||'').toLowerCase();
+    //             const fineAmount = o.fineAmount || 0;
+    //             const orderItemId = o.orderItemId || '';
+    //             const returnStatusRaw = (o.returnStatus||'').toLowerCase();
+    //             const action = o.action===true;
+    //             const username = o.username || 'Unknown';
+
+    //             const img = imageUrl ? `<img src="${imageUrl}" style="width:60px;height:auto;object-fit:cover;border-radius:4px;"/>` : '';
+    //             const status = action ? '<span class="badge bg-success">Approved</span>' : '<span class="badge bg-warning text-dark">Pending</span>';
+    //             const fine = fineAmount>0?`₹${fineAmount}`:'0';
+    //             const returnStatusBadge = returnStatusRaw==="pending"
+    //                 ? '<span class="badge bg-warning text-dark">Pending</span>'
+    //                 : returnStatusRaw==="returned"
+    //                     ? '<span class="badge bg-success">Returned</span>'
+    //                     : '<span class="badge bg-secondary">NA</span>';
+
+    //             return `<tr>
+    //                 <td>${username}</td>
+    //                 <td><div style="display:flex; align-items:center; gap:10px;">${img}</div></td>
+    //                 <td>${title}</td>
+    //                 <td><span class="text-primary">${orderCode}</span></td>
+    //                 <td>${quantity}</td>
+    //                 <td>${orderDate?fmt(orderDate):''}</td>
+    //                 <td>${returnDate?fmt(returnDate):'<span class="text-muted">Not set</span>'}</td>
+    //                 <td class="status-cell">${status}</td>
+    //                 <td><span class="text-danger">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fine}</span></td>
+    //                 <td>
+    //                     <div class="form-check form-switch">
+    //                         <input class="form-check-input toggle-active" type="checkbox" data-id="${orderItemId}" ${action?'checked disabled':''}>
+    //                     </div>
+    //                 </td>
+    //                     <td class="return-status-cell customsize" data-id="${orderItemId}">
+    //     ${returnStatusBadge}
+    // </td>
+    //             </tr>`;
+    //         }).join('');
+    //     }
+
+        async function fetchData(q, page){
+            const endpoint = isUserView ? '/Order/SearchOrdersForUser' : '/Order/SearchOrders';
+            const url = `${endpoint}?search=${encodeURIComponent(q||'')}&page=${page}&pageSize=${pageSize}`;
+            try{
+                const res = await fetch(url);
+                if(!res.ok) return;
+                const data = await res.json();
+                renderRows(data.orders||[]);
+                currentPage = page; // always use requested page
+                const total = data.total || 0;
+                const start = total===0?0:((currentPage-1)*pageSize+1);
+                const end = Math.min(currentPage*pageSize,total);
+                if(showingNode) showingNode.textContent = `Showing ${start} - ${end} of ${total} entries`;
+                updateButtons(total);
+            } catch(err){ console.error(err); }
+        }
+
+        function updateButtons(total){
+            const prev = document.getElementById('prevBtn');
+            const next = document.getElementById('nextBtn');
+            if(prev){
+                const disabled = currentPage<=1;
+                prev.disabled = disabled;
+                prev.classList.toggle('disabled',disabled);
+            }
+            if(next){
+                const disabled = currentPage*pageSize >= total;
+                next.disabled = disabled;
+                next.classList.toggle('disabled',disabled);
+            }
+        }
+
+        if(input){
+            function handleSearch(e){
+                const q = e.target.value.trim();
+                clearTimeout(timeout);
+                timeout = setTimeout(()=>fetchData(q,1),300);
+            }
+            input.addEventListener('input', handleSearch);
+            input.addEventListener('paste', handleSearch);
+        }
+
+        document.getElementById('prevBtn')?.addEventListener('click', ()=> {
+            if(currentPage>1) fetchData(input?input.value:'', currentPage-1);
+        });
+        document.getElementById('nextBtn')?.addEventListener('click', ()=> {
+            fetchData(input?input.value:'', currentPage+1);
+        });
+
+        // Toggle change
+        $(document).on("change",".toggle-active",function(){
+            var checkbox=$(this);
+            var orderItemId=checkbox.data("id");
+            $.ajax({
+                url:"/Order/UpdateOrderStatus",
+                type:"POST",
+                data:{orderItemId:orderItemId},
+                    success:function(response){
+
+        if(response.success){
+
+            var row = checkbox.closest("tr");
+            var action = response.order.action;
+            var returnStatus = response.order.returnStatus;
+
+            // Update status
+            row.find(".status-cell").html(
+                action
+                ? '<span class="badge bg-success">Approved</span>'
+                : '<span class="badge bg-warning text-dark">Pending</span>'
+            );
+
+            // Update return status
+            var returnCell = row.find(".return-status-cell");
+
+            if(returnStatus.toLowerCase() === "pending"){
+                returnCell
+                    .html('<span class="badge bg-warning text-dark">Pending</span>')
+                    .attr("title","Double click to clear record");
+            }
+            else{
+                returnCell
+                    .html('<span class="badge bg-success">Returned</span>')
+                    .removeAttr("title");
+            }
+
+            checkbox.prop("disabled",true);
+        }
+    },
+                error:function(){
+                    alert("Something went wrong");
+                    checkbox.prop("checked",!checkbox.is(":checked"));
+                }
+            });
+        });
+
+        
+        $(document).on("dblclick",".return-status-cell",function(){
+            debugger;
+            var cell = $(this).closest(".return-status-cell");
+             if(!cell.attr("title")){
+                        return; // stop execution
+                    }
+            var orderItemId=cell.data("id");
+            $.ajax({
+                url:"/Order/UpdateReturnOrderStatus",
+                type:"POST",
+                data:{orderItemId:orderItemId},
+                success:function(response){
+                    debugger;
+                    if(response.success){
+                        var row = cell.closest("tr");
+                        var action = response.order.action;
+                        var returnStatus = response.order.returnStatus;
+                        var fineAmount = response.order.fineAmount;
+
+                        // Update status
+                        row.find(".status-cell").html(action?'<span class="badge bg-primary">Cleared</span>':'<span class="badge bg-warning text-dark">Pending</span>');
+
+                        // Update return status
+                        row.find(".return-status-cell").html(
+                            returnStatus.toLowerCase()==="pending"?'<span class="badge bg-warning text-dark">Pending</span>':'<span class="badge bg-success">Returned</span>'
+                        );
+
+                        checkbox.prop("disabled",true);
+                    } else {
+                        alert(response.message);
+                        // checkbox.prop("checked",!checkbox.is(":checked"));
+                    }
+                },
+                error:function(){
+                    alert("Something went wrong");
+                    checkbox.prop("checked",!checkbox.is(":checked"));
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded',()=>fetchData(input?input.value:'',currentPage));
+    })();
+</script>
