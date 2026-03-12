@@ -13,7 +13,7 @@ namespace BookNest.IServices
 
         public Task<AddToCartEnum> DecreaseQtyByOne(CartDTO cartDTO);
         public Task<AddToCartEnum> IncreaseQtyByOneInCart(int cartId);
-        public Task<AddToCartEnum> DecreaseQtyByOneInCart(int cartId);
+        public Task<int> DecreaseQtyByOneInCart(int cartId);
         public Task<int> GetCartListCount(string username);
     }
 }

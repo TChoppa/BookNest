@@ -38,6 +38,10 @@ namespace BookNest.Services
             await _orderRepo.AddOrder(orderList);
             foreach(var cartItem in cart)
             {
+                if (cartItem.AvailableQuantity == 0)
+                {
+                    break; 
+                }
                 var orderItemList = new OrderItem
                 {
                     OrderId = orderList.OrderId,

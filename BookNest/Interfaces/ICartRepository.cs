@@ -18,7 +18,9 @@ namespace BookNest.Interfaces
         public Task<List<Cart>> GetCartListByUsername(string username);
         public Task<Cart?> GetCartByIdCartId(int cartId);
         public Task<int> GetCartListCount(string username);
+        public Task<int> GetSumOfQuantity();
         public Task DeleteCartList(List<Cart> cartItems);
+        public  Task DeleteCartItem(int cartId);
 
     }
 }

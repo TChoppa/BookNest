@@ -28,6 +28,16 @@ namespace BookNest.Repositories
             _dbContext.CartList.RemoveRange(cartItems);
             await _dbContext.SaveChangesAsync();
         }
+        public async Task DeleteCartItem(int cartId)
+        {
+            var cartItem = await _dbContext.CartList.FindAsync(cartId);
+
+            if (cartItem != null)
+            {
+                _dbContext.CartList.Remove(cartItem);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
         public async Task<int> GetCartListCount(string username)
         {
             return await _dbContext.CartList.Where(x => x.Username == username && x.IsOrdered == false).SumAsync(x=>x.AvailableQuantity);
@@ -51,6 +61,11 @@ namespace BookNest.Repositories
         {
             return await _dbContext.CartList.Where(x=>x.CartId==cartId).FirstOrDefaultAsync();
         }
+        public async Task<int> GetSumOfQuantity()
+        {
+            return await _dbContext.CartList.SumAsync(x => x.AvailableQuantity);
+        }
+       
         public async Task UpdateCart(Cart cart)
         {
             _dbContext.CartList.Update(cart);

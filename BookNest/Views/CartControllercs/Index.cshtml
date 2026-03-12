@@ -8,7 +8,10 @@
 <!-- Correct references -->
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@* <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+ *@
+@* <script src="~/js/cart.js"></script> *@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
     /* your styles unchanged */
@@ -195,9 +198,10 @@
 </div>
 
 <!-- Single confirm button outside loop -->
-<a id="confirmBtn" href="javascript:void(0)" class="btn Confirm-orders-btn">
-    <i class="bi bi-cart-check"></i> Confirm Order
-</a>
+    <a id="confirmBtn" href="javascript:void(0)" class="btn Confirm-orders-btn">
+        <i class="bi bi-cart-check"></i> Confirm Order
+    </a>
+
 
 @section Scripts {
     <script>
@@ -219,17 +223,51 @@
                 }
             });
         }
-        function EmptyCardcard()
-        {
-            const emptyCard = `
-                <div class="card academic-title-card text-center">
-                    <h4 class="mb-0 fw-bold">Your cart is empty</h4>
-                </div>`;
-            $("#cartContainer").append(emptyCard);
+        function EmptyCardcard() {
+            if ($("#cartContainer .academic-title-card").length === 0) {
+                const emptyCard = `
+                    <div class="card academic-title-card text-center">
+                        <h4 class="mb-0 fw-bold">Your cart is empty</h4>
+                    </div>`;
+                $("#cartContainer").append(emptyCard);
+            }
+        }        
+        function toggleConfirmButton() {
+            if ($(".compact-card").length === 0) {
+                $("#confirmBtn").hide();
+
+                // prevent duplicate empty card
+                if ($("#cartContainer .academic-title-card").length === 0) {
+                    EmptyCardcard();
+                }
+            } else {
+                $("#confirmBtn").show();
+                $("#cartContainer .academic-title-card").remove();
+            }
         }
         $(document).ready(function () {
-            // Confirm order
-           // EmptyCardcard();
+            debugger;
+               
+        let hideConfirm = true; // default: hide unless condition met
+
+        $("#cartContainer .card").each(function () {
+            let qty = parseInt($(this).find(".qty-display").text(), 10);
+
+            // If any item has AvailableQuantity = 1, do not hide
+            if (qty === 1) {
+                hideConfirm = false;
+                return false; // break out of loop
+            }
+        });
+
+        if (hideConfirm) {
+            $("#confirmBtn").hide();
+            EmptyCardcard();
+
+        } else {
+            $("#confirmBtn").show();
+        }
+
             $("#confirmBtn").click(function (e) {
                  e.preventDefault();
                 $.ajax({
@@ -261,7 +299,7 @@
 
             $("#orderModal").modal("hide");
             $("#confirmBtn").hide();
-        });
+             });
 
             // Initial role-based qty control
             updateQtyControlsBasedOnRole();
@@ -271,6 +309,7 @@
                 var qty = parseInt($(this).text());
                 if (qty === 0) {
                     $(this).closest(".card").remove();
+                     //$("#confirmBtn").hide();
                 }
             });
 
@@ -289,7 +328,7 @@
                     }
                 });
             });
-
+           
             // Minus button
             $(document).on("click", ".minus", function () {
                 var cartId = $(this).data("id");
@@ -300,15 +339,21 @@
                         url: '/CartControllercs/DecreaseQtyByOneInCart',
                         type: 'POST',
                         data: { cartId: cartId },
-                        success: function () {
+                                success: function (res) {
+                    if (res.success) {
+
+                        if (res.value == -1) {
                             qtySpan.closest(".card").remove();
-                            EmptyCardcard();
-            //                 const emptyCard = `
-            //     <div class="card academic-title-card text-center">
-            //         <h4 class="mb-0 fw-bold">Your cart is empty</h4>
-            //     </div>`;
-            // $("#cartContainer").append(emptyCard);
+                        } else {
+                            qtySpan.closest(".card").remove();
                         }
+
+                        toggleConfirmButton(); // 🔥 important
+                    }
+                    else {
+                        alert(res.message);
+                    }
+                }                     
                     });
                 } else {
                     $.ajax({

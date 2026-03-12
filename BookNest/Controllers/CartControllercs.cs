@@ -109,11 +109,9 @@ namespace BookNest.Controllers
             var result = await _cartService.DecreaseQtyByOneInCart(cartId);
             var res = result switch
             {
-                AddToCartEnum.BookNotFound => new { success = false, message = "Book Not Found" },
-                AddToCartEnum.BookOutOfStock => new { success = false, message = "Book Out Of Stock" },
-                AddToCartEnum.CartNotFound => new { success = false, message = "Cart Not Found" },
-                AddToCartEnum.Success => new { success = true, message = "Added Sucessfully" },
-                _ => new { success = false, message = "" }
+                0 => new { success = false, message = "Cart Not Found" , value = result },
+                -1 => new { success = true, message = "Added Successfully", value = result },               
+                _ => new { success = true, message = "Error" , value = result }
 
             };
             return Ok(res);

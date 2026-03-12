@@ -107,19 +107,21 @@ namespace BookNest.Services
             //await _cartRepo.UpdateBook(book);
             return AddToCartEnum.Success;
         }
-        public async Task<AddToCartEnum> DecreaseQtyByOneInCart(int cartId)
+        public async Task<int> DecreaseQtyByOneInCart(int cartId)
         {
             var cartItem = await _cartRepo.GetCartByIdCartId(cartId);
             if (cartItem == null)
-                return AddToCartEnum.CartNotFound;
-            //var book = await _cartRepo.GetBookById(cartItem.BookId);
-            //if (book == null)
-            //    return AddToCartEnum.BookNotFound;           
-            cartItem.AvailableQuantity--;                     
-            //book.AvailableQuantity++;
+                return 0;       
+            cartItem.AvailableQuantity--;      
             await _cartRepo.UpdateCart(cartItem);
-           // await _cartRepo.UpdateBook(book);
-            return AddToCartEnum.Success;
+            //if(cartItem.AvailableQuantity==0)
+            //{
+            //    await _cartRepo.DeleteCartItem(cartId);
+            //}
+            var cartCount = await _cartRepo.GetSumOfQuantity();
+            if(cartCount <=0)
+                return -1;
+            return cartCount;
         }
     }
 }
