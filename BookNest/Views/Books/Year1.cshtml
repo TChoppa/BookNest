@@ -7,6 +7,10 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
+    body {
+        overflow-y: scroll;
+    }
+
     .academic-title-card {
         display: flex;
         align-items: center;
@@ -189,6 +193,36 @@
         font-size: 15px;
         font-weight: bold;
     }
+    /* ---------------- FIX NAVBAR / SIDEBAR SIZE ---------------- */
+
+    /* Always reserve space for vertical scrollbar */
+    html {
+        overflow-y: scroll;
+    }
+
+    /* Lock sidebar width so it never resizes */
+    .sidebar {
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+    }
+
+    /* Prevent layout shift when content changes */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Ensure cards never stretch */
+    .book-closed {
+        width: 265px;
+        min-width: 265px;
+        max-width: 265px;
+    }
+
+    /* Keep overlay space stable when buttons toggle */
+    .add-overlay {
+        min-height: 36px;
+    }
 </style>
 
 <div class="card academic-title-card">
@@ -199,10 +233,9 @@
     <div class="form-group mb-3 position-relative branch-select-box">
         <select id="selBranch" class="form-control custom-select" required>
             <option value="" disabled selected hidden>-- Select Branch --</option>
+            <option value="AIDS">Artificial Intelligence & Data Science</option>
             <option value="EEE">Electrical & Electronics</option>
             <option value="CSC">Computer Science</option>
-            <option value="ECE">Electronics</option>
-            <option value="CIV">Civil</option>
             <option value="MEC">Mechanical</option>
         </select>
         <i class="bi bi-chevron-down select-arrow"></i>
@@ -298,7 +331,7 @@
             var selectedValue = $(this).val();
             updateCartUIFromServer();
             $.ajax({
-                url: '/Books/GetYear1Books',
+                url: '/Books/GetYearBooks',
                 type: 'POST',
                 data: { branch: selectedValue, year: 'YEAR - I' },
 

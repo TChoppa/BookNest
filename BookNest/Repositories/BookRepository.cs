@@ -14,10 +14,10 @@ namespace BookNest.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<Book>> GetYear1Books(string branch, string year)
+        public async Task<List<Book>> GetYearBooks(string branch, string year)
         {
             return _dbContext.Books
-                .Where(b => b.Year == year || b.BranchCode==branch).ToList();           
+                .Where(b => b.Year == year && b.BranchCode==branch).ToList();           
         }
         public async Task<Cart?> GetBookById(int bookId, string userName)
         {
@@ -28,5 +28,13 @@ namespace BookNest.Repositories
         {
             return await _dbContext.Books.Where(x => x.BookId == bookId ).FirstOrDefaultAsync();
         }
+        public async Task<List<Book>> GetMultipleBookByIds(IEnumerable<int> bookIds)
+        {
+            // Example using Entity Framework
+            return await _dbContext.Books
+                                 .Where(b => bookIds.Contains(b.BookId))
+                                 .ToListAsync();
+        }
+
     }
 }

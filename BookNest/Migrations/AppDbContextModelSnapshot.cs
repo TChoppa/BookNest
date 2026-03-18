@@ -100,6 +100,100 @@ namespace BookNest.Migrations
                     b.ToTable("CartList");
                 });
 
+            modelBuilder.Entity("BookNest.Models.ClubHostAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("ClubHostAttachments");
+                });
+
+            modelBuilder.Entity("BookNest.Models.ClubHostMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("ClubHostMembers");
+                });
+
+            modelBuilder.Entity("BookNest.Models.ClubHostRoom", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClubHostCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("isActive")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClubHostRooms");
+                });
+
             modelBuilder.Entity("BookNest.Models.IssuedBook", b =>
                 {
                     b.Property<int>("IssuedBookId")
@@ -191,8 +285,14 @@ namespace BookNest.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderItemId"));
 
+                    b.Property<bool>("Action")
+                        .HasColumnType("bit");
+
                     b.Property<int>("BookId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("FineAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -203,6 +303,14 @@ namespace BookNest.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReturnStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -276,6 +384,28 @@ namespace BookNest.Migrations
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("BookNest.Models.ClubHostAttachment", b =>
+                {
+                    b.HasOne("BookNest.Models.ClubHostRoom", "Room")
+                        .WithMany("Attachments")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("BookNest.Models.ClubHostMember", b =>
+                {
+                    b.HasOne("BookNest.Models.ClubHostRoom", "Room")
+                        .WithMany("Members")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
             modelBuilder.Entity("BookNest.Models.User", b =>
                 {
                     b.HasOne("BookNest.Models.RoleMaster", "RoleMaster")
@@ -285,6 +415,13 @@ namespace BookNest.Migrations
                         .IsRequired();
 
                     b.Navigation("RoleMaster");
+                });
+
+            modelBuilder.Entity("BookNest.Models.ClubHostRoom", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("BookNest.Models.RoleMaster", b =>

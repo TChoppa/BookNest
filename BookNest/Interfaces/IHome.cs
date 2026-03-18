@@ -12,6 +12,7 @@ namespace BookNest.Interfaces
         public Task<PasswordChange> EditPasssword(ForgetPassword dto);
         public Task<User?> GetUserByUsername(string username);
         public Task<UserRoleEnum> GetUserRole(string username);
+        public Task<DashboradDTO> GetDashboard(string username);
 
     }
 }

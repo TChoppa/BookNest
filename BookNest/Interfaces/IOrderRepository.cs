@@ -17,6 +17,7 @@ namespace BookNest.Interfaces
         public Task<Order> GetOrderById(int orderId);
         public Task DeleteOrderItem(int orderItemId);
         public  Task<Order> UpdateOrder(Order order);
+        public Task UpdateOrderItem(OrderItem orderItem);
     }
         
 }

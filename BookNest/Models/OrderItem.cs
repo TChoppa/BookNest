@@ -11,7 +11,11 @@ namespace BookNest.Models
         public string Title { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public int Quantity { get; set; }
-        
+        public bool Action { get; set; }
+        public decimal FineAmount { get; set; } = 0;
+        public string Status { get; set; } = string.Empty;
+        public string ReturnStatus { get; set; } = string.Empty;
+
 
     }
 }

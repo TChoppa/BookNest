@@ -17,8 +17,8 @@
 
     <style>
         /* =======================
-                       BACKGROUND
-                    ======================= */
+                               BACKGROUND
+                            ======================= */
         body {
             min-height: 100vh;
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -31,8 +31,8 @@
         }
 
         /* =======================
-                       HEADER
-                    ======================= */
+                               HEADER
+                            ======================= */
         .gift-picker-wrapper {
             width: 100%;
             display: flex;
@@ -49,8 +49,8 @@
         }
 
         /* =======================
-                       CARD
-                    ======================= */
+                               CARD
+                            ======================= */
         .card {
             background: #ffffff !important;
             border-radius: 16px;
@@ -59,10 +59,10 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.1);
         }
 
-       /*  .card-body {
-            overflow-y: auto;
-            max-height: calc(100vh - 260px);
-        } */
+        /*  .card-body {
+                    overflow-y: auto;
+                    max-height: calc(100vh - 260px);
+                } */
 
         .card-header {
             background: #003366 !important;
@@ -74,8 +74,8 @@
         }
 
         /* =======================
-                       FORM CONTROLS
-                    ======================= */
+                               FORM CONTROLS
+                            ======================= */
         .form-control {
             background: #f9f9f9;
             border: 1px solid #ccc;
@@ -95,8 +95,8 @@
             }
 
         /* =======================
-                       CUSTOM SELECT ARROW
-                    ======================= */
+                               CUSTOM SELECT ARROW
+                            ======================= */
         .custom-select {
             appearance: none;
             -webkit-appearance: none;
@@ -121,8 +121,8 @@
         }
 
         /* =======================
-                       BUTTON
-                    ======================= */
+                               BUTTON
+                            ======================= */
         .btn-info {
             background: #0066cc;
             border: none;
@@ -140,8 +140,8 @@
             }
 
         /* =======================
-                       LINKS
-                    ======================= */
+                               LINKS
+                            ======================= */
         a {
             color: #0066cc;
             font-weight: 500;
@@ -153,8 +153,8 @@
             }
 
         /* =======================
-                       MESSAGES
-                    ======================= */
+                               MESSAGES
+                            ======================= */
         #msg {
             font-weight: 500;
             color: #cc0000;
@@ -165,7 +165,7 @@
             padding-bottom: 40px;
         }
 
-  
+
         @@media (min-width: 768px) {
             .col-md-6 {
                 flex: 0 0 auto;
@@ -182,7 +182,6 @@
             border: 1px solid #ccc;
             color: #333;
         }
-        
     </style>
 </head>
 <body>
@@ -230,7 +229,7 @@
                             </div>
 
                             <div class="form-group mb-3">
-                               @*  <input type="password" id="Password" name="Password"
+                                @*  <input type="password" id="Password" name="Password"
                                        class="form-control" placeholder="Password" required minlength="6" /> *@
                                 <div class="input-group">
                                     <input type="password" id="Password" name="Password"
@@ -242,11 +241,11 @@
                                             <path d="M8 5.5A2.5 2.5 0 1 0 8 10a2.5 2.5 0 0 0 0-4.5z" />
                                         </svg>
                                     </button>
-                                
-                            </div>
+
+                                </div>
                             </div>
                             <div class="form-group mb-3">
-                               <span id="msg"></span>
+                                <span id="msg"></span>
                             </div>
                             <br />
                             <div class="d-flex justify-content-center">
@@ -254,10 +253,11 @@
                             </div>
                         </form>
 
-                        <div class="mt-2 text-center">Already have an Account ? 
+                        <div class="mt-2 text-center">
+                            Already have an Account ?
                             <a href="@Url.Action("Login", "Home")" id="btnRegisterHide">Login</a>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -310,12 +310,12 @@
                     Firstname: $("#FirstName").val(),
                     Lastname: $("#LastName").val(),
                     Email: $("#Email").val(),
-                    Password: $("#Password").val(), 
+                    Password: $("#Password").val(),
                     Fk_RoleId: $("#UserRole").val()
                 }
             }
 
-             $("#registerForm").on("submit" , function (e) {         
+             $("#registerForm").on("submit" , function (e) {
                   e.preventDefault();
                     $.ajax({
                         url: "/Home/Register",
@@ -333,7 +333,7 @@
                                 $("#UserRole").val("")
                                 alert(response.message);
                                 window.location.href = response.redirectUrl;
-                            } 
+                            }
                             else {
                                 debugger;
                                      $("#msg")

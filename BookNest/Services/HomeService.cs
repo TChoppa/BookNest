@@ -1,6 +1,7 @@
 ﻿using BookNest.DTO;
 using BookNest.Enums;
 using BookNest.Interfaces;
+using BookNest.IServices;
 using BookNest.Models;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,9 +11,16 @@ namespace BookNest.Services
     public class HomeService:IHome
     {
         private readonly IUserRepository _repo; 
-        public HomeService(IUserRepository repo)
+        private readonly ICartRepository _cartRepo;
+        private readonly IOrderService _orderRepo;
+        private readonly IClubHostRepository _clubHostRepo;
+        public HomeService(IUserRepository repo, ICartRepository cartRepo,IOrderService orderRepo,IClubHostRepository clubHostRepo)
         { 
           _repo = repo ;
+          _cartRepo = cartRepo ;
+          _orderRepo = orderRepo ;
+          _clubHostRepo = clubHostRepo;
+
         }
         public async Task<RoleMaster?> GetAllRoles(int roleId)
         {
@@ -24,6 +32,7 @@ namespace BookNest.Services
             if (existingUser != null) {
                 return false;
             }
+           
             CreatePasswordHash(dto.Password, out byte[] hash, out byte[] salt);
             var user = new User
                 {
@@ -43,6 +52,9 @@ namespace BookNest.Services
             var user = await _repo.GetUserByUsername(dto.UserName);
             if (user == null)
                 return new LoginResultDTO { Success = false, Message = "User Not Exists" };
+            //if (user.Username == dto.UserName) 
+            //    return new LoginResultDTO { Success = false, Message = "Username already exists" };
+
             if (!VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
                 return new LoginResultDTO { Success = false, Message = "Invalid Password" };
             var roles = await _repo.GetAllRoles(user.Fk_RoleId);
@@ -125,6 +137,42 @@ namespace BookNest.Services
 
             return roleMessage;
 
+        }
+
+        public async Task<DashboradDTO> GetDashboard(string username)
+        {
+            var user = await _repo.GetUserByUsername(username);
+            if (user == null) return null;
+
+            var role = await _repo.GetAllRoles(user.Fk_RoleId);
+            if (role == null) return null;
+
+            var cartCount = await _cartRepo.GetCartListCount(user.Username);
+            var orders = await _orderRepo.GetOrderItemsByUsername(user.Username);
+
+            var pendingOrderCount = orders.Count(o => o.Status == "Pending");
+            var approvedOrderCount = orders.Count(o => o.Status == "Approved");
+            var clearedOrderCount = orders.Count(o => o.Status == "Cleared");
+
+            var clubHostRooms = await _clubHostRepo.GetAllRooms() ?? new List<ClubHostRoom>();
+            var clubHostCount = clubHostRooms.Count;
+            var clubHostOngoingCount = clubHostRooms.Count(r => r.isActive == "Ongoing");
+            var clubHostNotStartedCount = clubHostRooms.Count(r => r.isActive == "NotStarted");
+            var clubHostExpiredCount = clubHostRooms.Count(r => r.isActive != "Ongoing" && r.isActive != "NotStarted");
+
+            return new DashboradDTO
+            {
+                Name = $"{user.Firstname} {user.Lastname}",
+                RoleName = role.Name,
+                CartCount = cartCount,
+                PendingOrders = pendingOrderCount,
+                ApprovedRecords = approvedOrderCount,
+                ClearedRecords = clearedOrderCount,
+                ClubHostCount = clubHostCount,
+                CLubHostOngoingCount = clubHostOngoingCount,
+                CLubHostNotYetStartedCount = clubHostNotStartedCount,
+                CLubHostExpiredCount = clubHostExpiredCount
+            };
         }
 
     }

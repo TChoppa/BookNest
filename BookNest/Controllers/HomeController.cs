@@ -77,7 +77,8 @@ namespace BookNest.Controllers
                         return BadRequest(new { success = false, message = "Invalid user" });
                     var loginResult = await _HomeService.Login(dto);
                 ViewBag.RoleName = loginResult.Role;
-                    if (!loginResult.Success)
+                HttpContext.Session.SetString("RoleName", loginResult.Role);
+                if (!loginResult.Success)
                         return Unauthorized(new {success=false,message=loginResult.Message});
                     var claims = new List<Claim>()
                     {
@@ -136,14 +137,13 @@ namespace BookNest.Controllers
             return Ok(result);
 
         }
-
+        [HttpGet]
         public async Task<IActionResult> Dashboard()
         {
             var userName = HttpContext.Session.GetString("UserName");
             ViewBag.UserName = userName;
-            var users = await _HomeService.GetUserByUsername(userName);
-            ViewBag.roleId = users.Fk_RoleId;
-            return View();
+            var users = await _HomeService.GetDashboard(userName);         
+            return View(users);
         }
         [HttpGet]
         public async Task<IActionResult> GetUserRole()

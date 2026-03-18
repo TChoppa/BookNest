@@ -16,16 +16,16 @@ namespace BookNest.Services
             _bookRep = bookRepository;
             _carRepo = cartRepository;
         }
-        public async Task<List<Book>> GetYear1Books(string branch, string year)
+        public async Task<List<Book>> GetYearBooks(string branch, string year)
         {
-            return await _bookRep.GetYear1Books(branch, year);
+            return await _bookRep.GetYearBooks(branch, year);
         }
 
 
-        public async Task<List<BookWithCartQtyDto>> GetYear1Books(string branch, string year, string username)
+        public async Task<List<BookWithCartQtyDto>> GetYearBooks(string branch, string year, string username)
         {
             // 1️⃣ Get books
-            var books = await _bookRep.GetYear1Books(branch, year);
+            var books = await _bookRep.GetYearBooks(branch, year);
             if (books == null || !books.Any())
                 return new List<BookWithCartQtyDto>();
 

@@ -1,12 +1,13 @@
 ﻿@{
-    ViewBag.Title = "Dashboard";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // or null if you want standalone
+    ViewBag.PageTitle = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@model BookNest.DTO.DashboradDTO
+
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-
 <!-- Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -14,27 +15,30 @@
 <style>
     .bento-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        grid-auto-rows: 150px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
     }
 
     .bento-item {
+
         background: #fff;
         border-radius: 16px;
-        padding: 20px;
+        padding: 40px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: center;
+        align-items: center;
         transition: transform 0.2s ease;
+        min-height: 180px; /* flexible height */
+        text-align: center;
     }
 
         .bento-item:hover {
             transform: translateY(-5px);
         }
 
-        /* Variations */
+        /* Variations for zig-zag look */
         .bento-item.large {
             grid-column: span 2;
             grid-row: span 2;
@@ -48,35 +52,86 @@
             grid-row: span 2;
         }
 
+        .bento-item.large {
+            grid-column: span 3;
+            grid-row: span 2;
+        }
+    .bento-item.orders
+    {
+        grid-column: span 2;
+    }
+    /* Collapse spans on mobile */
+    @@media (max-width: 768px) {
+        .bento-item.large,
+        .bento-item.wide,
+        .bento-item.tall {
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+    }
 </style>
-<div class="main-body">
+
+<div class="container my-4">
     <div class="bento-grid">
-        <!-- Dashboard card -->
+        <!-- Welcome card (large) -->
         <div class="bento-item large">
-            <h5><i class="bi bi-speedometer2"></i> Dashboard</h5>
-            <p>Quick stats and overview</p>
-            <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-sm mt-auto">Go</a>
+            <h5><i class="bi bi-emoji-smile"></i> Welcome @Model.Name</h5>
+            <p>Role :  @Context.Session.GetString("RoleName")</p>
         </div>
 
-        <!-- Categories card -->
-        <div class="bento-item">
-            <h5><i class="bi bi-book"></i> Categories</h5>
-            <p>Browse books & journals</p>
-            <a href="@Url.Action("Index", "Category")" class="btn btn-outline-primary btn-sm">Open</a>
-        </div>
-
-        <!-- Cart card -->
+        <!-- Cart card (tall) -->
         <div class="bento-item tall">
             <h5><i class="bi bi-cart-plus"></i> Cart</h5>
-            <p>Your selected items</p>
-            <a href="@Url.Action("Cart", "Shop")" class="btn btn-success btn-sm">View Cart</a>
+            <p><b>Your selected items</b></p>
+            <p><b style="font-size:4rem; color:gold;">@Model.CartCount</b></p>
+            <a href="@Url.Action("ViewCart", "CartControllercs")" class="btn btn-success btn-sm mt-auto">View Cart</a>
         </div>
 
-        <!-- Settings card -->
+        <!-- Orders card (small) -->
+        <div class="bento-item orders">
+            <h5><i class="bi bi-box-seam"></i> Orders</h5>
+            <div class="d-flex justify-content-around text-center">
+                <div>
+                    <p><b style="font-size:4rem; color:gold;">@Model.PendingOrders</b></p>
+                    <small>Pending</small>
+                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div>
+                    <p><b style="font-size:4rem; color:forestgreen;">@Model.ApprovedRecords</b></p>
+                    <small>Approved</small>
+                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div>
+                    <p><b style="font-size:4rem; color:mediumblue;">@Model.ClearedRecords</b></p>
+                    <small>Cleared</small>
+                </div>
+            </div>
+            <br />
+            <a href="@Url.Action("GetOrderByUsername", "Order")" class="btn btn-primary btn-sm mt-auto">View Orders</a>
+        </div>
+
+        <!-- ClubHost card (wide) -->
         <div class="bento-item wide">
-            <h5><i class="bi bi-gear"></i> Settings</h5>
-            <p>Manage preferences</p>
-            <a href="@Url.Action("Settings", "Account")" class="btn btn-secondary btn-sm">Configure</a>
+            <h5><i class="bi bi-people"></i> ClubHost</h5>
+            <div class="d-flex justify-content-around text-center">
+                <div>
+                    <p><b style="font-size:4rem; color:green;">@Model.CLubHostOngoingCount</b></p>
+                    <small>Ongoing</small>
+                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div>
+                    <p><b style="font-size:4rem; color:gold;">@Model.CLubHostNotYetStartedCount</b></p>
+                    <small>Not Started</small>
+                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div>
+                    <p><b style="font-size:4rem; color:red;">@Model.CLubHostExpiredCount</b></p>
+                    <small>Expired</small>
+                </div>
+            </div>
+            @* <p>
+                Total: @Model.ClubHostCount <br />
+                Ongoing: @Model.CLubHostOngoingCount <br />
+                Not Started: @Model.CLubHostNotYetStartedCount <br />
+                Expired: @Model.CLubHostExpiredCount
+            </p> *@
+            <a href="@Url.Action("Index", "ClubHost")" class="btn btn-info btn-sm mt-auto">Explore</a>
         </div>
     </div>
 </div>

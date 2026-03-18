@@ -254,10 +254,10 @@
             let qty = parseInt($(this).find(".qty-display").text(), 10);
 
             // If any item has AvailableQuantity = 1, do not hide
-            if (qty === 1) {
+            if (qty >= 1) {
                 hideConfirm = false;
                 return false; // break out of loop
-            }
+            }          
         });
 
         if (hideConfirm) {

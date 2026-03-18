@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.PageTitle = "📚 Orders 📚";
+    ViewBag.PageTitle = "📚 All Orders 📚";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model List<BookNest.DTO.OrderIItemDTO>
@@ -16,6 +16,9 @@
             border-color: #198754;
         }
 
+    #DateStyle{
+        width:100px;
+    }
     .status-cell {
         cursor: pointer;
     }
@@ -53,8 +56,9 @@ else
         <thead>
             <tr>
                 <th>Username</th>
-                <th>Title</th>
                 <th>Book</th>
+                <th>Title</th>
+                <th>Year</th>
                 <th>Order Code</th>
                 <th>Quantity</th>
                 <th>Order Date</th>
@@ -80,9 +84,10 @@ else
                         </div>
                     </td>
                     <td>@order.Title</td>
+                    <td>@order.Year</td>
                     <td><span class="text-primary">@order.OrderCode</span></td>
                     <td>@order.Quantity</td>
-                    <td>@order.OrderDate.ToString("yyyy-MM-dd hh:mm")</td>
+                    <td id="DateStyle">@order.OrderDate.ToString("yyyy-MM-dd hh:mm")</td>
                     <td>
                         @if (order.ReturnDate.HasValue)
                         {
@@ -93,7 +98,7 @@ else
                             <span class="text-muted">Not set</span>
                         }
                     </td>
-                    <td class="status-cell">
+                    <td class="status-cell" id="DateStyle">
                         @if ((order.Status ?? "").ToLowerInvariant() == "pending")
                         {
                             <span class="badge bg-warning text-dark">Pending</span>
@@ -183,6 +188,7 @@ else
 
             const imageUrl = o.imageUrl || '';
             const title = o.title || '';
+            const year = o.year || o.year ||'';
             const orderCode = o.orderCode || '';
             const quantity = o.quantity || 0;
             const orderDate = o.orderDate || null;
@@ -238,6 +244,7 @@ else
                 </td>
 
                 <td>${title}</td>
+                <td>${year}</td>
 
                 <td>
                     <span class="text-primary">${orderCode}</span>
@@ -245,9 +252,9 @@ else
 
                 <td>${quantity}</td>
 
-                <td>${orderDate ? fmt(orderDate) : ''}</td>
+                <td id='DateStyle'>${orderDate ? fmt(orderDate) : ''}</td>
 
-                <td>
+                <td id='DateStyle'>
                     ${returnDate ? fmt(returnDate) : '<span class="text-muted">Not set</span>'}
                 </td>
 
@@ -407,7 +414,9 @@ else
             else{
                 returnCell
                     .html('<span class="badge bg-success">Returned</span>')
-                    .removeAttr("title");
+                    .attr("title","")
+                    .css("pointer-events", "none")  // disables mouse interaction
+        .css("cursor", "default");
             }
 
             checkbox.prop("disabled",true);

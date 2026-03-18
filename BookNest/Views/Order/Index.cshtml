@@ -58,6 +58,8 @@ else
         <thead>
             <tr>              
                 <th>Book</th>
+                <th>Title</th>.
+                <th>Year</th>
                 <th>Order Code</th>
                 <th>Quantity</th>
                 <th>Order Date</th>
@@ -70,7 +72,7 @@ else
                 }
             </tr>
         </thead>
-        <tbody id="ordersTbody">
+        <tbody id="ordersTbody" >
             @foreach (var order in Model)
             {
                 <tr>                   
@@ -81,9 +83,11 @@ else
                                 <img src="@order.ImageUrl" alt="@order.Title"
                                      style="width:60px;height:auto;object-fit:cover;border-radius:4px;" />
                             }
-                            <span>@order.Title</span>
+                            
                         </div>
                     </td>
+                    <td><span>@order.Title</span></td>
+                    <td><span>@order.Year</span></td>
                     <td> <span class="text-primary">@order.OrderCode</span></td>
                     <td>@order.Quantity</td>
                     <td>@order.OrderDate.ToString("yyyy-MM-dd hh:mm")</td>
@@ -106,7 +110,7 @@ else
                         {
                             <span class="badge bg-success">Approved</span>
                         }
-                        else
+                        else if ((order.Status ?? "").ToLowerInvariant() == "cleared")
                         {
                             <span class="badge bg-primary">Cleared</span>
                         }
@@ -259,6 +263,7 @@ else
 
             const imageUrl = o.imageUrl || o.ImageUrl || '';
             const title = o.title || o.Title || '';
+            const year = o.year || o.year ||'';
             const orderCode = o.orderCode || o.OrderCode || '';
             const quantity = o.quantity || o.Quantity || 0;
             const orderDate = o.orderDate || o.OrderDate || null;
@@ -278,7 +283,7 @@ else
             else if(statusRaw === "approved"){
                 status = '<span class="badge bg-success">Approved</span>';
             }
-            else{
+            else if(statusRaw === "cleared"){
                 status = '<span class="badge bg-primary">Cleared</span>';
             }
             const fine = (fineAmount && fineAmount>0) ? `₹${fineAmount}` : '0';
@@ -297,10 +302,11 @@ else
             <tr>
                 <td>
                     <div style="display:flex;align-items:center;gap:10px;">
-                        ${img}
-                        <span>${title}</span>
+                        ${img}                  
                     </div>
                 </td>
+                <td><span>${title}</span></td>
+                <td><span>${year}</span></td>
                 <td><span class="text-primary">${orderCode}</span></td>
                 <td>${quantity}</td>
                 <td>${orderDate ? fmt(orderDate) : ''}</td>

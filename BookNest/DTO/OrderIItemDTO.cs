@@ -16,6 +16,7 @@
         public string ReturnStatus { get; set; } = "NA";
 
         public string Username { get; set; }= string.Empty;
+        public string Year { get; set; } = string.Empty;
 
 
     }

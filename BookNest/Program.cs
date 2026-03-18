@@ -24,6 +24,8 @@ namespace BookNest
             builder.Services.AddScoped<ICartRepository, CartRepository>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<IClubHostService, ClubHostService>();
+            builder.Services.AddScoped<IClubHostRepository, ClubHostRepository>();
             builder.Services.AddScoped<CartService>();
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

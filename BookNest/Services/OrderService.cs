@@ -48,8 +48,9 @@ namespace BookNest.Services
                     BookId = cartItem.BookId,
                     ImageUrl = cartItem.ImageUrl,
                     Quantity = cartItem.AvailableQuantity,
-                    Title = cartItem.Title
-                    
+                    Title = cartItem.Title,
+                    Status= "Pending"
+
                 };
                 await _orderRepo.AddOrderItem(orderItemList);
                  var book = await _bookRepo.GetBookByIds(cartItem.BookId);
@@ -68,51 +69,6 @@ namespace BookNest.Services
             return orderList.OrderCode;
         }
 
-        //public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetAllOrders(int page, int pageSize, string? search)
-        //{
-        //    var allOrders = await _orderRepo.GetAllOrders();
-        //    if (allOrders == null)
-        //        allOrders = new List<Order>();
-
-        //    // filter
-        //    if (!string.IsNullOrWhiteSpace(search))
-        //    {
-        //        search = search.Trim();
-        //        allOrders = allOrders.Where(o => (o.OrderCode ?? string.Empty).Contains(search, StringComparison.OrdinalIgnoreCase)
-        //                                  || (o.Username ?? string.Empty).Contains(search, StringComparison.OrdinalIgnoreCase))
-        //                               .ToList();
-        //    }
-
-        //    var total = allOrders.Count;
-
-        //    var paged = allOrders.OrderByDescending(o => o.OrderDate)
-        //                         .Skip((Math.Max(1, page) - 1) * pageSize)
-        //                         .Take(pageSize)
-        //                         .ToList();
-
-        //    var orderItemDtos = new List<OrderIItemDTO>();
-        //    foreach (var order in paged)
-        //    {
-        //        var orderItems = await _orderRepo.GetOrderItemByUsername(order.OrderId);
-        //        var totalQty = orderItems?.Sum(i => i.Quantity) ?? 0;
-        //        var firstImage = orderItems?.FirstOrDefault()?.ImageUrl ?? string.Empty;
-
-        //        var dto = new OrderIItemDTO
-        //        {
-        //            OrderCode = order.OrderCode,
-        //            ImageUrl = firstImage,
-        //            Title = order.Username, // show username for admin listing
-        //            OrderDate = order.OrderDate,
-        //            Quantity = totalQty,
-        //            ReturnDate = order.ReturnDate,
-        //            FineAmount = order.FineAmount,
-        //            Status = order.Status
-        //        };
-        //        orderItemDtos.Add(dto);
-        //    }
-
-        //    return (orderItemDtos, total);
-        //}
         public async Task<(List<OrderIItemDTO> orderItems, int totalCount)> GetAllOrders(int page, int pageSize, string? search)
         {
             var allOrders = await _orderRepo.GetAllOrders() ?? new List<Order>();
@@ -148,7 +104,9 @@ namespace BookNest.Services
                 .Skip((Math.Max(1, page) - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-
+            var bookIds = pagedItems.Select(i => i.BookId).ToList();
+            var books = await _bookRepo.GetMultipleBookByIds(bookIds);
+            var bookLookup = books.ToDictionary(b => b.BookId);
             // map to DTO
             var itemDtos = pagedItems.Select(i =>
             {
@@ -160,6 +118,7 @@ namespace BookNest.Services
                     if (totalDays > 7)
                         fineAmount = (totalDays - 7) * 5; // ₹5 per extra day
                 }
+                var book = bookLookup.TryGetValue(i.BookId, out var b) ? b : null;
                 return new OrderIItemDTO
                 {
                     OrderItemId = i.OrderItemId,
@@ -169,12 +128,13 @@ namespace BookNest.Services
                     ImageUrl = i.ImageUrl,
                     Quantity = i.Quantity,
                     OrderDate = parent.OrderDate,
-                    Status = parent.Status,
+                    Status = i.Status,
                     ReturnDate = parent.ReturnDate,
                     FineAmount = fineAmount,
-                    Action = parent.Action,
-                    ReturnStatus = parent.ReturnStatus,
-                    Username=parent.Username
+                    Action = i.Action,
+                    ReturnStatus = i.ReturnStatus,
+                    Username=parent.Username,
+                    Year=book?.Year
 
                 };
             }).ToList();
@@ -207,8 +167,8 @@ namespace BookNest.Services
                         OrderDate = order.OrderDate,
                         Quantity = orderItem.Quantity,
                         ReturnDate = order.ReturnDate,
-                        FineAmount = order.FineAmount,
-                        Status=order.Status
+                        FineAmount = orderItem.FineAmount,
+                        Status=orderItem.Status
                     };
                     orderItemDtos.Add(orderItemDto);
                 }
@@ -235,57 +195,72 @@ namespace BookNest.Services
             return true;
         }
 
-        // paged per-user order items with optional search
-        public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetOrderItemsByUsername(string username, int page, int pageSize, string? search)
+        public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetOrderItemsByUsername(
+      string username, int page, int pageSize, string? search)
         {
             var orders = await _orderRepo.GetOrderByUsername(username) ?? new List<Order>();
             if (!orders.Any())
                 return (new List<OrderIItemDTO>(), 0);
 
-            // build lookup
+            // Build lookup for orders
             var orderLookup = orders.ToDictionary(o => o.OrderId);
 
+            // Collect all items across orders
             var allItems = new List<OrderItem>();
             foreach (var order in orders)
             {
                 var items = await _orderRepo.GetOrderItemByUsername(order.OrderId);
                 if (items != null)
-                    allItems.AddRange(items.Select(i => {
-                        // attach order id already present
-                        return i;
-                    }));
+                    allItems.AddRange(items);
             }
 
-            // filter by search on title or ordercode
+            // Filter by search on title or order code
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var s = search.Trim();
-                allItems = allItems.Where(i => (i.Title ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase)
-                                              || (orderLookup[i.OrderId].OrderCode ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase))
-                                    .ToList();
+                allItems = allItems.Where(i =>
+                    (i.Title ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    (orderLookup[i.OrderId].OrderCode ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
 
             var total = allItems.Count;
 
+            // Apply paging
             var paged = allItems.OrderByDescending(i => orderLookup[i.OrderId].OrderDate)
                                 .Skip((Math.Max(1, page) - 1) * pageSize)
                                 .Take(pageSize)
                                 .ToList();
 
-            var dtos = paged.Select(i =>
+            // Fetch all books for the paged items in one go
+            var bookIds = paged.Select(i => i.BookId).ToList();
+            var books = await _bookRepo.GetMultipleBookByIds(bookIds);
+            var bookLookup = books.ToDictionary(b => b.BookId);
+
+            // Map to DTOs sequentially
+            var dtos = new List<OrderIItemDTO>();
+            foreach (var i in paged)
             {
                 var parent = orderLookup[i.OrderId];
+
                 int fineAmount = 0;
                 if (parent.ReturnDate.HasValue)
                 {
                     var totalDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days;
                     if (totalDays > 7)
-                        fineAmount = (totalDays - 7) * 5; // ₹5 per extra day
+                        fineAmount = (totalDays - 7) * 5;
+                    i.FineAmount = fineAmount;
                 }
-                return new OrderIItemDTO
+
+                // Safe sequential update
+                await _orderRepo.UpdateOrderItem(i);
+
+                var book = bookLookup.TryGetValue(i.BookId, out var b) ? b : null;
+
+                dtos.Add(new OrderIItemDTO
                 {
-                    OrderId=parent.OrderId,
-                    OrderItemId=i.OrderItemId,
+                    OrderId = parent.OrderId,
+                    OrderItemId = i.OrderItemId,
                     OrderCode = parent.OrderCode,
                     ImageUrl = i.ImageUrl ?? string.Empty,
                     Title = i.Title,
@@ -293,30 +268,108 @@ namespace BookNest.Services
                     Quantity = i.Quantity,
                     ReturnDate = parent.ReturnDate,
                     FineAmount = fineAmount,
-                    Status = parent.Status
-                };
-            }).ToList();
+                    Status = i.Status,
+                    Year = book?.Year
+                });
+            }
 
             return (dtos, total);
         }
+
+
+
+        //    public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetOrderItemsByUsername(
+        //string username, int page, int pageSize, string? search)
+        //    {
+        //        var orders = await _orderRepo.GetOrderByUsername(username) ?? new List<Order>();
+        //        if (!orders.Any())
+        //            return (new List<OrderIItemDTO>(), 0);
+
+        //        // Build lookup for orders
+        //        var orderLookup = orders.ToDictionary(o => o.OrderId);
+
+        //        // Collect all items across orders
+        //        var allItems = new List<OrderItem>();
+        //        foreach (var order in orders)
+        //        {
+        //            var items = await _orderRepo.GetOrderItemByUsername(order.OrderId);
+        //            if (items != null)
+        //                allItems.AddRange(items);
+        //        }
+
+        //        // Filter by search on title or order code
+        //        if (!string.IsNullOrWhiteSpace(search))
+        //        {
+        //            var s = search.Trim();
+        //            allItems = allItems.Where(i =>
+        //                (i.Title ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase) ||
+        //                (orderLookup[i.OrderId].OrderCode ?? string.Empty).Contains(s, StringComparison.OrdinalIgnoreCase))
+        //                .ToList();
+        //        }
+
+        //        var total = allItems.Count;
+
+        //        // Apply paging
+        //        var paged = allItems.OrderByDescending(i => orderLookup[i.OrderId].OrderDate)
+        //                            .Skip((Math.Max(1, page) - 1) * pageSize)
+        //                            .Take(pageSize)
+        //                            .ToList();
+
+        //        // Fetch all books for the paged items in one go
+        //        var bookIds = paged.Select(i => i.BookId).ToList();
+        //        var books = await _bookRepo.GetMultipleBookByIds(bookIds);
+        //        var bookLookup = books.ToDictionary(b => b.BookId);
+
+        //        // Map to DTOs
+        //        var dtos = paged.Select(async i =>
+        //        {
+        //            var parent = orderLookup[i.OrderId];
+        //            int fineAmount = 0;
+        //            if (parent.ReturnDate.HasValue)
+        //            {
+        //                var totalDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days;
+        //                if (totalDays > 7)
+        //                    //fineAmount = (totalDays - 7) * 5;
+        //                    fineAmount = 5;
+        //                //i.FineAmount = fineAmount; // ₹5 per extra day
+        //            }
+        //             await _orderRepo.UpdateOrderItem(i);
+        //            var book = bookLookup.TryGetValue(i.BookId, out var b) ? b : null;
+
+        //            return new OrderIItemDTO
+        //            {
+        //                OrderId = parent.OrderId,
+        //                OrderItemId = i.OrderItemId,
+        //                OrderCode = parent.OrderCode,
+        //                ImageUrl = i.ImageUrl ?? string.Empty,
+        //                Title = i.Title,              // order item title
+        //                OrderDate = parent.OrderDate,
+        //                Quantity = i.Quantity,
+        //                ReturnDate = parent.ReturnDate,
+        //                FineAmount = fineAmount,
+        //                Status = i.Status,
+        //                Year = book?.Year
+        //            };
+        //        }).ToList();
+        //        var dtoTasks = (await Task.WhenAll(dtos)).ToList();
+        //        return (dtoTasks, total);
+        //    }
 
         public async Task<UpdateOrderDTO> UpdateOrderStatus(int orderItemId)
         {
             var orderItem = await _orderRepo.GetOrderItemById(orderItemId);
             if (orderItem == null) return null;
-            var order = await _orderRepo.GetOrderById(orderItem.OrderId);
-            if (order == null) return null;
-            order.Status = "Approved";
-            order.ReturnStatus = "Pending";
-            order.Action = true;
-            var res = await _orderRepo.UpdateOrder(order);
-            if(res == null) return null;
-            
+            //var order = await _orderRepo.GetOrderById(orderItem.OrderId);
+            //if (order == null) return null;
+            orderItem.Status = "Approved";
+            orderItem.ReturnStatus = "Pending";
+            orderItem.Action = true;
+            await _orderRepo.UpdateOrderItem(orderItem);
+                      
             var updateOrder = new UpdateOrderDTO
-            {
-                FineAmount = res.FineAmount,
-                Action = res.Action,
-                ReturnStatus = res.ReturnStatus
+            {                
+                Action = orderItem.Action,
+                ReturnStatus = orderItem.ReturnStatus
             };
             return updateOrder;
         }
@@ -324,13 +377,12 @@ namespace BookNest.Services
         {
             var orderItem = await _orderRepo.GetOrderItemById(orderItemId);
             if (orderItem == null) return null;
-            var order = await _orderRepo.GetOrderById(orderItem.OrderId);
-            if (order == null) return null;
-            order.Status = "Cleared";
-            order.ReturnStatus = "Returned";
-            order.Action = true;
-            var res = await _orderRepo.UpdateOrder(order);
-            if (res == null) return null;
+            //var order = await _orderRepo.GetOrderById(orderItem.OrderId);
+            //if (order == null) return null;
+            orderItem.Status = "Cleared";
+            orderItem.ReturnStatus = "Returned";
+            await _orderRepo.UpdateOrderItem(orderItem);
+          
             var book = await _bookRepo.GetBookByIds(orderItem.BookId);
 
             if (book != null)
@@ -344,9 +396,9 @@ namespace BookNest.Services
             }
             var updateOrder = new UpdateOrderDTO
             {
-                FineAmount = res.FineAmount,
-                Action = res.Action,
-                ReturnStatus = res.ReturnStatus
+                FineAmount = orderItem.FineAmount,
+                Action = orderItem.Action,
+                ReturnStatus = orderItem.ReturnStatus
             };
             return updateOrder;
         }

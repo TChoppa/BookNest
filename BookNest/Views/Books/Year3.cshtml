@@ -1,0 +1,560 @@
+﻿@{
+    ViewBag.Title = "Image Gallery";
+    ViewBag.PageTitle = "📚 Books 📚";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    body {
+        overflow-y: scroll;
+    }
+
+    .academic-title-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 20px;
+        width: 90%;
+        max-width: 420px;
+        margin: 1px auto;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1.5px solid #dbeafe;
+        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.08);
+    }
+
+    .branch-select-box {
+        width: 90%;
+        max-width: 420px;
+        margin: auto;
+    }
+
+    .branch-center-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 45vh;
+        transition: all .4s ease;
+    }
+
+    .branch-top-wrapper {
+        min-height: auto;
+        margin-top: 25px;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #0066cc;
+    }
+
+    /* BOOK CARD */
+    .book-closed {
+        position: relative;
+        width: 265px;
+        height: 296px;
+        margin: auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+    }
+
+        .book-closed img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    /* BOOK SPINE */
+    .book-spine {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 100%;
+        background: linear-gradient(to right, #888, #ccc);
+        z-index: 2;
+    }
+
+    /* QTY BADGE */
+    .qty-badge {
+        position: absolute;
+        top: 8px;
+        left: 16px; /* after spine */
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 3;
+    }
+
+    /* ADD BUTTON OVERLAY */
+    .add-overlay {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        z-index: 3;
+    }
+
+    .qty {
+        cursor: default;
+        user-select: none;
+    }
+
+    .add-overlay .add-btn {
+        background: rgba(0,0,0,0.4);
+        border: 1px solid #fff;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 4px 14px;
+    }
+
+        .add-overlay .add-btn:hover {
+            background: rgba(0,0,0,0.6);
+        }
+
+        /* Disabled appearance for add when out of stock */
+        .add-overlay .add-btn[disabled] {
+            background: rgba(0,0,0,0.15);
+            color: rgba(255,255,255,0.6);
+            border-color: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+        }
+
+    /* Transparent qty controls */
+    .qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0,0,0,0.4);
+        border-radius: 10px;
+        padding: 4px 6px;
+    }
+
+        .qty-controls .btn {
+            background: transparent !important;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+        }
+
+            .qty-controls .btn:hover {
+                background: rgba(255,255,255,0.15) !important;
+            }
+
+        .qty-controls .qty {
+            color: #fff;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+    .view-orders-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 9999;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 22px;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(79,70,229,0.4);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .view-orders-btn:hover {
+            background: linear-gradient(135deg, #4338ca, #4f46e5);
+            color: #fff;
+        }
+
+    .cart-badge {
+        position: absolute;
+        top: -11px;
+        right: -6px;
+        background: red;
+        color: white;
+        border-radius: 50%;
+        min-width: 24px;
+        height: 24px;
+        line-height: 23px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: bold;
+    }
+    /* ---------------- FIX NAVBAR / SIDEBAR SIZE ---------------- */
+
+    /* Always reserve space for vertical scrollbar */
+    html {
+        overflow-y: scroll;
+    }
+
+    /* Lock sidebar width so it never resizes */
+    .sidebar {
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+    }
+
+    /* Prevent layout shift when content changes */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Ensure cards never stretch */
+    .book-closed {
+        width: 265px;
+        min-width: 265px;
+        max-width: 265px;
+    }
+
+    /* Keep overlay space stable when buttons toggle */
+    .add-overlay {
+        min-height: 36px;
+    }
+</style>
+
+<div class="card academic-title-card">
+    <h4 class="mb-0 fw-bold text-center">YEAR - III</h4>
+</div>
+
+<div id="branchWrapper" class="branch-center-wrapper">
+    <div class="form-group mb-3 position-relative branch-select-box">
+        <select id="selBranch" class="form-control custom-select" required>
+            <option value="" disabled selected hidden>-- Select Branch --</option>
+            <option value="AIDS">Artificial Intelligence & Data Science</option>
+            <option value="EEE">Electrical & Electronics</option>
+            <option value="CSC">Computer Science</option>
+            <option value="MEC">Mechanical</option>
+        </select>
+        <i class="bi bi-chevron-down select-arrow"></i>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row g-4" id="imageRow"></div>
+</div>
+
+<a id="cartView" href="/CartControllercs/ViewCart" class="btn view-orders-btn">
+    <i class="bi bi-cart-check"></i> View Cart
+    <span id="cartBadge" class="cart-badge">0</span>
+</a>
+
+@section Scripts {
+    <script>
+
+         $(function () {
+            function updateQtyControlsBasedOnRole() {
+            $.ajax({
+                            url: '/Home/GetUserRole',
+                            type: 'GET',
+                            success: function (role) {
+
+                                console.log("role :"+ role);
+                            if (role === "Student") {
+
+                                $(".cart-controls").each(function () {
+
+                                    let container = $(this);
+                                    //let qty = Number(container.data("qty"));
+                                    let qty = Number(container.find(".qty").text());
+
+                                    if (qty === 1) {
+                                        container.find(".plus").prop("disabled", true);
+                                        return;
+                                    }
+                                     container.find(".plus").prop("disabled", false);
+                                });
+                        }
+                        else if(role === "Faculty")
+                        {
+                           debugger;
+                             $(".cart-controls").each(function () {
+
+                                    let container = $(this);
+                                    //let qty = Number(container.data("qty"));
+                                      let qty = Number(container.find(".qty").text());
+                                    console.log(qty);
+                                    if (qty === 5) {
+                                        container.find(".plus").prop("disabled", true);
+                                        return;
+                                    }
+                                     container.find(".plus").prop("disabled", false);
+                                });
+                        }
+                    }
+                });
+
+        }
+            function updateCartUIFromServer() {
+            $.ajax({
+                url: '/CartControllercs/GetCartCount',
+                type: 'GET',
+                success: function (count) {
+                    if (count > 0) {
+                        $("#cartView").show();
+                        $("#cartBadge").text(count).removeClass("d-none");
+                    } else {
+                        $("#cartView").hide();
+                        $("#cartBadge").addClass("d-none");
+                    }
+                }
+            });
+        }
+            function toggleCartViewButton() {
+            let anyAddVisible = $(".add-btn:visible").length > 0;
+
+            if (anyAddVisible) {
+                $("#cartView").hide();
+            } else {
+                $("#cartView").show();
+            }
+        }
+            updateCartUIFromServer();
+            $('#selBranch').on('change', function () {
+
+            $('#branchWrapper')
+                .removeClass('branch-center-wrapper')
+                .addClass('branch-top-wrapper');
+
+            var selectedValue = $(this).val();
+            updateCartUIFromServer();
+            $.ajax({
+                url: '/Books/GetYearBooks',
+                type: 'POST',
+                data: { branch: selectedValue, year: 'YEAR - III' },
+
+                success: function (response) {
+
+                    var books = response;
+                    let html = "";
+
+                    $.each(books, function (_, book) {
+
+                        // 🔑 Sync JS cart with backend cart
+                        if (book.cartQty > 0) {
+                            cart[book.title] = book.cartQty;
+                        }
+
+                        html += `
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex justify-content-center">
+
+                            <div class="book-closed">
+
+                                <div class="book-spine"></div>
+
+                                <span class="qty-badge">QTY: ${book.availableQuantity}</span>
+
+                                <img src="${book.imageUrl}" alt="${book.title}">
+
+                                   <div class="add-overlay cart-controls"
+                                     data-id="${book.bookId}"
+                                     data-title="${book.title}"
+                                     data-qty="${book.cartQty}"
+                                     data-imageurl="${book.imageUrl}"
+                                     data-year="${book.year}"
+                                     data-available="${book.availableQuantity}">
+
+                                    <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}" ${book.availableQuantity <= 0 ? 'disabled' : ''}>${book.availableQuantity <= 0 ? 'OUT' : 'ADD'}</button>
+
+                                    <div class="qty-controls ${book.cartQty > 0 ? '' : 'd-none'}">
+                                        <button class="btn minus">−</button>
+                                        <span class="qty">${book.cartQty > 0 ? book.cartQty : 1}</span>
+                                        <button class="btn plus">+</button>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>`;
+                    });
+
+                    $("#imageRow").html(html);
+
+                    // After DOM insertion apply availability rules
+                    $(".cart-controls").each(function () {
+                        const container = $(this);
+                        const avail = Number(container.data("available"));
+                        const qty = Number(container.find(".qty").text()) || 0;
+
+                        // If no stock and nothing in cart -> ensure ADD is disabled and labelled OUT
+                        if (avail <= 0 && qty === 0) {
+                            container.find(".add-btn").prop("disabled", true).text("OUT");
+                        }
+
+                        // If cart already contains items and stock is depleted, disable the plus button
+                        if (qty >= avail) {
+                            container.find(".plus").prop("disabled", true);
+                        } else {
+                            container.find(".plus").prop("disabled", false);
+                        }
+                    });
+
+                    updateCartUIFromServer();
+                    updateQtyControlsBasedOnRole();
+                        },
+                error: function () {
+                    alert("Failed to load books");
+                }
+            });
+        });
+
+            let cart = {};
+
+            // Prevent handling clicks on disabled add buttons
+            $(document).on("click", ".add-btn", function () {
+                if ($(this).prop("disabled")) return;
+
+                const container = $(this).closest(".cart-controls");
+                const title = container.data("title");
+
+                cart[title] = 1;
+                container.find(".qty").text(1);
+
+                $(this).addClass("d-none");
+                container.find(".qty-controls").removeClass("d-none");
+
+                // If adding reduces available stock to zero, disable the plus button
+                const avail = Number(container.data("available"));
+                if (1 >= avail) {
+                    container.find(".plus").prop("disabled", true);
+                }
+
+                var itemDetails = {
+                    BookId: container.data("id"),
+                    Title: container.data("title"),
+                    ImageUrl: container.data("imageurl"),
+                    AvailableQuantity: container.data("qty"),
+                    Year: container.data("year"),
+                    Username: "@Context.Session.GetString("UserName")"
+                };
+
+                $.ajax({
+                    url: '/CartControllercs/AddToCart',
+                    type: 'POST',
+                    data: JSON.stringify(itemDetails),
+                    contentType: "application/json",
+                    success: function () {
+                        // ✅ runs AFTER server updates cart
+                        updateQtyControlsBasedOnRole();
+                        updateCartUIFromServer();
+                    }
+                });
+                updateCartUIFromServer();
+            });
+
+            $(document).on("click", ".plus", function () {
+
+            const container = $(this).closest(".cart-controls");
+            const title = container.data("title");
+
+            // respect available stock
+            const avail = Number(container.data("available"));
+            if (!cart[title]) cart[title] = 0;
+
+            // Do not increment past available stock
+            if (cart[title] >= avail) {
+                container.find(".plus").prop("disabled", true);
+                return;
+            }
+
+            cart[title]++;
+
+            container.find(".qty").text(cart[title]);
+            container.find(".minus").prop("disabled", false); // enable minus
+
+            // Disable plus if reached available
+            if (cart[title] >= avail) {
+                container.find(".plus").prop("disabled", true);
+            } else {
+                container.find(".plus").prop("disabled", false);
+            }
+
+            var itemDetails = {
+                BookId: container.data("id"),
+                Title: container.data("title"),
+                ImageUrl: container.data("imageurl"),
+                AvailableQuantity: cart[title],   // ✅ send updated qty
+                Year: container.data("year"),
+                Username: "@Context.Session.GetString("UserName")"
+            };
+
+            $.ajax({
+                url: '/CartControllercs/IncreaseQtyByOne',
+                type: 'POST',
+                data: JSON.stringify(itemDetails),
+                contentType: "application/json",
+                 success: function () {
+            // ✅ runs AFTER server updates cart
+                updateCartUIFromServer();
+                updateQtyControlsBasedOnRole();
+        }
+
+            });
+            // updateCartUIFromServer();
+        });
+
+            $(document).on("click", ".minus", function () {
+
+            const container = $(this).closest(".cart-controls");
+            const title = container.data("title");
+
+            if (!cart[title] || cart[title] <= 0) return;
+
+            cart[title]--;
+
+            // update qty text
+            container.find(".qty").text(cart[title]);
+
+            if (cart[title] === 0) {
+                // 🔁 Show ADD button again
+                container.find(".qty-controls").addClass("d-none");
+                container.find(".add-btn").removeClass("d-none");
+
+                delete cart[title]; // remove from JS cart
+            }
+
+            // Re-enable plus if stock allows
+            const avail = Number(container.data("available"));
+            const qtyNow = Number(container.find(".qty").text()) || 0;
+            if (qtyNow < avail) {
+                container.find(".plus").prop("disabled", false);
+            }
+
+            var itemDetails = {
+                BookId: container.data("id"),
+                Title: container.data("title"),
+                ImageUrl: container.data("imageurl"),
+                AvailableQuantity: cart[title] || 0,
+                Year: container.data("year"),
+                Username: "@Context.Session.GetString("UserName")"
+            };
+
+            $.ajax({
+                url: '/CartControllercs/DecreaseQtyByOne',
+                type: 'POST',
+                data: JSON.stringify(itemDetails),
+                contentType: "application/json",
+                success: function () {
+            // ✅ runs AFTER server updates cart
+            updateCartUIFromServer();
+            updateQtyControlsBasedOnRole();
+        }
+            });
+        });
+
+
+        });
+    </script>
+}

@@ -21,12 +21,27 @@ namespace BookNest.Controllers
         {
             return View();
         }
+        [HttpGet]
+        public IActionResult Year3()
+        {
+            return View();
+        }
+        [HttpGet]
+        public IActionResult Year4()
+        {
+            return View();
+        }
         [HttpPost]
-        public  async Task<IActionResult> GetYear1Books(string branch , string year)
+        public  async Task<IActionResult> GetYearBooks(string branch , string year)
         {
             var username = HttpContext.Session.GetString("UserName");
-            var books =  await _bookService.GetYear1Books(branch , year , username);
+            var books =  await _bookService.GetYearBooks(branch , year , username);
             return Ok(books);
+        }
+        [HttpGet]
+        public IActionResult Year2()
+        {
+            return View();
         }
 
     }

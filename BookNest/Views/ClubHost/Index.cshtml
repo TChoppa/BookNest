@@ -1,0 +1,128 @@
+﻿@{
+    ViewBag.Title = "Image Gallery";
+    ViewBag.PageTitle = "Club Host 👥 ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model IEnumerable<ClubHostRoom>
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+    .badge {
+        display: inline-block;
+        width: 81px;
+        text-align: center;
+    }
+</style>
+<div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-success shadow-sm" href="@Url.Action("Create", "ClubHost")">
+        ➕ Create ClubHost
+    </a>
+</div>
+
+<div class="row">
+    @foreach (var room in Model)
+    {
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@room.Topic</h5>
+                    <p class="card-subtitle text-muted mb-2">Code: @room.ClubHostCode</p>
+
+                    <ul class="list-unstyled small mb-3">
+                        @* <li><strong>Id:</strong> @room.Id</li> *@
+                        <li><strong>Creator  :</strong> @room.Name</li>
+                        <li><strong>Start    :</strong> @room.StartTime</li>
+                        <li><strong>End      :</strong> @room.EndTime</li>
+                        <li><strong>Location :</strong> @room.Location</li>
+                    </ul>
+
+                    <span class="badge @(room.isActive == "Ongoing" ? "bg-success" : room.isActive == "NotStarted" ? "bg-warning" : "bg-danger")">
+                        @room.isActive
+                    </span>
+
+                    <div class="mt-3">
+                        <h6>Attachments</h6>
+                        @if (room.isActive == "Ongoing")
+                        {
+                            <input type="file" class="form-control upload-file mb-2" data-roomid="@room.Id" multiple />
+                        }
+                        <div id="files-@room.Id">
+                            @{
+                                int counter = 1;
+                            }
+                            @foreach (var file in room.Attachments)
+                            {
+                                <a href="@file.FilePath" target="_blank" class="d-block">
+                                    @counter. 📎 @file.FileName
+                                </a>
+                                counter++;
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <h6>Members</h6>
+                        <ul id="members-@room.Id" class="list-unstyled">
+                            @foreach (var member in room.Members)
+                            {
+                                <li>👤 @member.Name</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-primary w-100 join-btn" data-id="@room.Id" @(room.isActive == "NotStarted" ? "" : "disabled")>
+                        Join Room
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(".join-btn").click(function() {
+            var roomId = $(this).data("id");
+            var studentName = prompt("Enter your name:");
+            if(studentName){
+                $.post("/ClubHost/JoinRoom", { roomId: roomId, studentName: studentName }, function(response) {
+                    if(response.success){
+                        $("#members-" + response.roomId).append("<li>👤 " + response.studentName + "</li>");
+                        alert(response.studentName + " joined successfully!");
+                    }
+                });
+            }
+        });
+
+        $(document).on("change", ".upload-file", function () {
+            var files = this.files;
+            var roomId = $(this).data("roomid");
+            var formData = new FormData();
+
+            for (var i = 0; i < files.length; i++) {
+                formData.append("files", files[i]);
+            }
+            formData.append("roomId", roomId);
+
+            $.ajax({
+                url: '/ClubHost/UploadFile',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    var existingCount = $("#files-" + roomId + " a").length;
+                    response.forEach(function (file, index) {
+                        var number = existingCount + index + 1;
+                        var html = `<a href="${file.filePath}" target="_blank" class="d-block">
+                                       ${number}. 📎 ${file.fileName}
+                                    </a>`;
+                        $("#files-" + roomId).append(html);
+                    });
+                }
+            });
+        });
+    </script>
+}

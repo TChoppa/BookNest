@@ -52,6 +52,12 @@ namespace BookNest.Repositories
             await _dbContext.SaveChangesAsync();
             return order;
         }
+        public async Task UpdateOrderItem(OrderItem orderItem)
+        {
+            _dbContext.OrderItems.Update(orderItem);
+            await _dbContext.SaveChangesAsync();
+            //return orderItem;
+        }
         public async Task DeleteOrderItem(int orderItemId)
         {
             // Remove the order item and delete the parent order if it has no more items
