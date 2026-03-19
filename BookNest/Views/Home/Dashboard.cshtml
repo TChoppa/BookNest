@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.PageTitle = "Dashboard";
+    ViewBag.PageTitle = "Dashboard 📈 ";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model BookNest.DTO.DashboradDTO
@@ -20,7 +20,6 @@
     }
 
     .bento-item {
-
         background: #fff;
         border-radius: 16px;
         padding: 40px;
@@ -30,7 +29,7 @@
         justify-content: center;
         align-items: center;
         transition: transform 0.2s ease;
-        min-height: 180px; /* flexible height */
+        min-height: 180px;
         text-align: center;
     }
 
@@ -38,9 +37,9 @@
             transform: translateY(-5px);
         }
 
-        /* Variations for zig-zag look */
+        /* Desktop layout (UNCHANGED) */
         .bento-item.large {
-            grid-column: span 2;
+            grid-column: span 3;
             grid-row: span 2;
         }
 
@@ -52,86 +51,105 @@
             grid-row: span 2;
         }
 
-        .bento-item.large {
-            grid-column: span 3;
-            grid-row: span 2;
+        .bento-item.orders {
+            grid-column: span 2;
         }
-    .bento-item.orders
-    {
-        grid-column: span 2;
-    }
-    /* Collapse spans on mobile */
+
+    /* ✅ MOBILE FIX ONLY */
     @@media (max-width: 768px) {
+        .bento-grid {
+            grid-template-columns: 1fr; /* stack */
+        }
+
         .bento-item.large,
         .bento-item.wide,
-        .bento-item.tall {
-            grid-column: span 1;
-            grid-row: span 1;
+        .bento-item.tall,
+        .bento-item.orders {
+            grid-column: span 1 !important;
+            grid-row: span 1 !important;
         }
+
+        .bento-item {
+            padding: 20px;
+        }
+
+            .bento-item b {
+                font-size: 2rem !important;
+            }
     }
 </style>
 
 <div class="container my-4">
     <div class="bento-grid">
-        <!-- Welcome card (large) -->
+
+        <!-- Welcome -->
         <div class="bento-item large">
             <h5><i class="bi bi-emoji-smile"></i> Welcome @Model.Name</h5>
-            <p>Role :  @Context.Session.GetString("RoleName")</p>
+            <p>Role : @Context.Session.GetString("RoleName")</p>
         </div>
 
-        <!-- Cart card (tall) -->
+        <!-- Cart -->
         <div class="bento-item tall">
             <h5><i class="bi bi-cart-plus"></i> Cart</h5>
             <p><b>Your selected items</b></p>
             <p><b style="font-size:4rem; color:gold;">@Model.CartCount</b></p>
-            <a href="@Url.Action("ViewCart", "CartControllercs")" class="btn btn-success btn-sm mt-auto">View Cart</a>
+            <a href="@Url.Action("ViewCart", "CartControllercs")" class="btn btn-primary btn-sm mt-auto">
+                View Cart
+            </a>
         </div>
 
-        <!-- Orders card (small) -->
+        <!-- Orders -->
         <div class="bento-item orders">
             <h5><i class="bi bi-box-seam"></i> Orders</h5>
-            <div class="d-flex justify-content-around text-center">
+
+            <div class="d-flex justify-content-around text-center flex-wrap gap-3">
                 <div>
                     <p><b style="font-size:4rem; color:gold;">@Model.PendingOrders</b></p>
                     <small>Pending</small>
-                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+
                 <div>
                     <p><b style="font-size:4rem; color:forestgreen;">@Model.ApprovedRecords</b></p>
                     <small>Approved</small>
-                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+
                 <div>
                     <p><b style="font-size:4rem; color:mediumblue;">@Model.ClearedRecords</b></p>
                     <small>Cleared</small>
                 </div>
             </div>
+
             <br />
-            <a href="@Url.Action("GetOrderByUsername", "Order")" class="btn btn-primary btn-sm mt-auto">View Orders</a>
+            <a href="@Url.Action("GetOrderByUsername", "Order")" class="btn btn-primary btn-sm mt-auto">
+                View Orders
+            </a>
         </div>
 
-        <!-- ClubHost card (wide) -->
+        <!-- ClubHost -->
         <div class="bento-item wide">
             <h5><i class="bi bi-people"></i> ClubHost</h5>
-            <div class="d-flex justify-content-around text-center">
+
+            <div class="d-flex justify-content-around text-center flex-wrap gap-3">
                 <div>
                     <p><b style="font-size:4rem; color:green;">@Model.CLubHostOngoingCount</b></p>
                     <small>Ongoing</small>
-                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+
                 <div>
                     <p><b style="font-size:4rem; color:gold;">@Model.CLubHostNotYetStartedCount</b></p>
                     <small>Not Started</small>
-                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+
                 <div>
                     <p><b style="font-size:4rem; color:red;">@Model.CLubHostExpiredCount</b></p>
                     <small>Expired</small>
                 </div>
             </div>
-            @* <p>
-                Total: @Model.ClubHostCount <br />
-                Ongoing: @Model.CLubHostOngoingCount <br />
-                Not Started: @Model.CLubHostNotYetStartedCount <br />
-                Expired: @Model.CLubHostExpiredCount
-            </p> *@
-            <a href="@Url.Action("Index", "ClubHost")" class="btn btn-info btn-sm mt-auto">Explore</a>
+
+            <a href="@Url.Action("Index", "ClubHost")" class="btn btn-primary btn-sm mt-auto">
+                Explore
+            </a>
         </div>
+
     </div>
 </div>

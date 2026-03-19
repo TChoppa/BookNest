@@ -31,6 +31,11 @@ namespace BookNest.Controllers
         {
             return View();
         }
+        [HttpGet]
+        public IActionResult Journals()
+        {
+            return View();
+        }
         [HttpPost]
         public  async Task<IActionResult> GetYearBooks(string branch , string year)
         {

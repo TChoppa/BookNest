@@ -205,14 +205,19 @@
                             <a class="nav-link" href="@Url.Action("Year4", "Books")">Year 4</a>
 
                         </div>
+                        @if (User.IsInRole("Faculty"))
+                {
+                            <a class="nav-link  ms-3 d-flex justify-content-between align-items-center" href="@Url.Action("Journals", "Books")">Journals</a>
+                }
                     </div>
 
                 </li>
+                
 
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "ClubHost")"><i class="bi bi-gear"></i> ClubHost</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("ViewCart", "CartControllercs")"><i class="bi bi-cart"></i> Cart</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("GetOrderByUsername", "Order")"><i class="bi bi-box"></i> Orders</a></li>
-
+               
                 @if (User.IsInRole("Librarian"))
                 {
                     <li class="nav-item"><a class="nav-link" href="@Url.Action("GetAllOrders", "Order")"><i class="bi bi-box"></i> UsersOrderList</a></li>
