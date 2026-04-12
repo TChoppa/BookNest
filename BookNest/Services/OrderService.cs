@@ -104,26 +104,41 @@ namespace BookNest.Services
                 .Skip((Math.Max(1, page) - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+
             var bookIds = pagedItems.Select(i => i.BookId).ToList();
             var books = await _bookRepo.GetMultipleBookByIds(bookIds);
             var bookLookup = books.ToDictionary(b => b.BookId);
+
             // map to DTO
             var itemDtos = pagedItems.Select(i =>
             {
                 var parent = orderLookup[i.OrderId];
                 int fineAmount = 0;
+
                 if (parent.ReturnDate.HasValue)
                 {
-                    var totalDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days;
-                    if (totalDays > 7)
-                        fineAmount = (totalDays - 7) * 5; // ₹5 per extra day
+                    if (i.ReturnStatus != "Returned")
+                    {
+                        // Still not returned → fine keeps accumulating until today
+                        var overdueDays = (DateTime.UtcNow.Date - parent.ReturnDate.Value.Date).Days;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
+                    else
+                    {
+                        // Returned → fine stops at the return date
+                        var overdueDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days - 7;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
                 }
+
                 var book = bookLookup.TryGetValue(i.BookId, out var b) ? b : null;
                 return new OrderIItemDTO
                 {
                     OrderItemId = i.OrderItemId,
                     OrderId = parent.OrderId,
-                    OrderCode = parent.OrderCode,          
+                    OrderCode = parent.OrderCode,
                     Title = i.Title,
                     ImageUrl = i.ImageUrl,
                     Quantity = i.Quantity,
@@ -133,14 +148,14 @@ namespace BookNest.Services
                     FineAmount = fineAmount,
                     Action = i.Action,
                     ReturnStatus = i.ReturnStatus,
-                    Username=parent.Username,
-                    Year=book?.Year
-
+                    Username = parent.Username,
+                    Year = book?.Year
                 };
             }).ToList();
 
             return (itemDtos, total);
         }
+
 
         public async Task<List<OrderIItemDTO>> GetOrderItemsByUsername(string username)
         {
@@ -196,7 +211,7 @@ namespace BookNest.Services
         }
 
         public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetOrderItemsByUsername(
-      string username, int page, int pageSize, string? search)
+       string username, int page, int pageSize, string? search)
         {
             var orders = await _orderRepo.GetOrderByUsername(username) ?? new List<Order>();
             if (!orders.Any())
@@ -246,9 +261,20 @@ namespace BookNest.Services
                 int fineAmount = 0;
                 if (parent.ReturnDate.HasValue)
                 {
-                    var totalDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days;
-                    if (totalDays > 7)
-                        fineAmount = (totalDays - 7) * 5;
+                    if (i.ReturnStatus != "Returned")
+                    {
+                        // Not returned yet → fine keeps accumulating until today
+                        var overdueDays = (DateTime.UtcNow.Date - parent.ReturnDate.Value.Date).Days;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
+                    else
+                    {
+                        // Returned → fine stops at the return date
+                        var overdueDays = (parent.ReturnDate.Value.Date - parent.OrderDate.Date).Days - 7;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
                     i.FineAmount = fineAmount;
                 }
 
