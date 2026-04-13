@@ -58,6 +58,8 @@ namespace BookNest.Controllers
             ViewBag.TotalCount = total;
             ViewBag.Search = search ?? string.Empty;
             ViewBag.IsUserView = false;
+            ViewBag.IsOverdueView = true;
+            ViewBag.ViewType = "all";
 
             return View(orders);
         }
@@ -120,6 +122,30 @@ namespace BookNest.Controllers
             if (res == null)
                 return Unauthorized(new { success = false, message = "Order Not Updated" });
             return Ok(new { success = true, order = res });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetOverdueNotClearedOrders(int page = 1, int pageSize = 10, string? search = null)
+        {
+            var (data, total) = await _orderService.GetOverdueNotClearedOrders(page, pageSize, search);
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = total;
+            ViewBag.Search = search ?? string.Empty;
+            ViewBag.ViewType = "overdue";// or true if this is a per-user view
+            //return View(data);
+            return View("GetAllOrders", data);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetOverdueNotClearedOrdersData(int page = 1, int pageSize = 10, string? search = null)
+        {
+            var (data, total) = await _orderService.GetOverdueNotClearedOrders(page, pageSize, search);
+
+            return Json(new
+            {
+                orders = data,
+                total = total
+            });
         }
 
     }

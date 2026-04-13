@@ -13,5 +13,6 @@
         public int CLubHostOngoingCount { get; set; } 
          public int CLubHostNotYetStartedCount { get; set; } 
          public int CLubHostExpiredCount { get; set; }
+        public int DueReturnCount { get; set; }
     }
 }

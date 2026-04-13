@@ -155,6 +155,7 @@ else
     var page = (int?)(ViewBag.Page) ?? 1;
     var pageSize = (int?)(ViewBag.PageSize) ?? 5;
     var total = (int?)(ViewBag.TotalCount) ?? Model?.Count() ?? 0;
+
 }
 <div class="d-flex justify-content-between align-items-center">
     <div id="showingText">@($"Showing {(total == 0 ? 0 : ((page - 1) * pageSize + 1))} - {(page * pageSize > total ? total : page * pageSize)} of {total} entries")</div>
@@ -283,70 +284,47 @@ else
 
         }).join('');
     }
-    //     function renderRows(items){
-    //         if(!tbody) return;
 
-    //         tbody.innerHTML = items.map(o=>{
-    //             const imageUrl = o.imageUrl || '';
-    //             const title = o.title || '';
-    //             const orderCode = o.orderCode || '';
-    //             const quantity = o.quantity || 0;
-    //             const orderDate = o.orderDate || null;
-    //             const returnDate = o.returnDate || null;
-    //             const statusRaw = (o.status||'').toLowerCase();
-    //             const fineAmount = o.fineAmount || 0;
-    //             const orderItemId = o.orderItemId || '';
-    //             const returnStatusRaw = (o.returnStatus||'').toLowerCase();
-    //             const action = o.action===true;
-    //             const username = o.username || 'Unknown';
 
-    //             const img = imageUrl ? `<img src="${imageUrl}" style="width:60px;height:auto;object-fit:cover;border-radius:4px;"/>` : '';
-    //             const status = action ? '<span class="badge bg-success">Approved</span>' : '<span class="badge bg-warning text-dark">Pending</span>';
-    //             const fine = fineAmount>0?`₹${fineAmount}`:'0';
-    //             const returnStatusBadge = returnStatusRaw==="pending"
-    //                 ? '<span class="badge bg-warning text-dark">Pending</span>'
-    //                 : returnStatusRaw==="returned"
-    //                     ? '<span class="badge bg-success">Returned</span>'
-    //                     : '<span class="badge bg-secondary">NA</span>';
+        var viewType = '@ViewBag.ViewType';
+            async function fetchData(q, page){
 
-    //             return `<tr>
-    //                 <td>${username}</td>
-    //                 <td><div style="display:flex; align-items:center; gap:10px;">${img}</div></td>
-    //                 <td>${title}</td>
-    //                 <td><span class="text-primary">${orderCode}</span></td>
-    //                 <td>${quantity}</td>
-    //                 <td>${orderDate?fmt(orderDate):''}</td>
-    //                 <td>${returnDate?fmt(returnDate):'<span class="text-muted">Not set</span>'}</td>
-    //                 <td class="status-cell">${status}</td>
-    //                 <td><span class="text-danger">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fine}</span></td>
-    //                 <td>
-    //                     <div class="form-check form-switch">
-    //                         <input class="form-check-input toggle-active" type="checkbox" data-id="${orderItemId}" ${action?'checked disabled':''}>
-    //                     </div>
-    //                 </td>
-    //                     <td class="return-status-cell customsize" data-id="${orderItemId}">
-    //     ${returnStatusBadge}
-    // </td>
-    //             </tr>`;
-    //         }).join('');
-    //     }
+        let endpoint = '';
 
-        async function fetchData(q, page){
-            const endpoint = isUserView ? '/Order/SearchOrdersForUser' : '/Order/SearchOrders';
-            const url = `${endpoint}?search=${encodeURIComponent(q||'')}&page=${page}&pageSize=${pageSize}`;
-            try{
-                const res = await fetch(url);
-                if(!res.ok) return;
-                const data = await res.json();
-                renderRows(data.orders||[]);
-                currentPage = page; // always use requested page
-                const total = data.total || 0;
-                const start = total===0?0:((currentPage-1)*pageSize+1);
-                const end = Math.min(currentPage*pageSize,total);
-                if(showingNode) showingNode.textContent = `Showing ${start} - ${end} of ${total} entries`;
-                updateButtons(total);
-            } catch(err){ console.error(err); }
+        if(viewType === 'overdue'){
+            endpoint = '/Order/GetOverdueNotClearedOrdersData';
         }
+        else{
+            endpoint = isUserView
+                ? '/Order/SearchOrdersForUser'
+                : '/Order/SearchOrders';
+        }
+
+        const url = `${endpoint}?search=${encodeURIComponent(q||'')}&page=${page}&pageSize=${pageSize}`;
+
+        try{
+            const res = await fetch(url);
+            if(!res.ok) return;
+
+            const data = await res.json();
+
+            renderRows(data.orders || []);
+            currentPage = page;
+
+            const total = data.total || 0;
+            const start = total===0?0:((currentPage-1)*pageSize+1);
+            const end = Math.min(currentPage*pageSize,total);
+
+            if(showingNode){
+                showingNode.textContent = `Showing ${start} - ${end} of ${total} entries`;
+            }
+
+            updateButtons(total);
+
+        } catch(err){
+            console.error(err);
+        }
+    }
 
         function updateButtons(total){
             const prev = document.getElementById('prevBtn');

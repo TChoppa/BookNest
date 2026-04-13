@@ -148,18 +148,41 @@ namespace BookNest.Services
             if (role == null) return null;
 
             var cartCount = await _cartRepo.GetCartListCount(user.Username);
-            var orders = await _orderRepo.GetOrderItemsByUsername(user.Username);
 
+            var orders = await _orderRepo.GetOrderItemsByUsername(user.Username);           
             var pendingOrderCount = orders.Count(o => o.Status == "Pending");
             var approvedOrderCount = orders.Count(o => o.Status == "Approved");
             var clearedOrderCount = orders.Count(o => o.Status == "Cleared");
+
+            var totalOrderItems = await _orderRepo.GetAllOrderItems();
+            var totalPendingOrderCount = totalOrderItems.Count(o => o.Status == "Pending");
+            var totalApprovedOrderCount = totalOrderItems.Count(o => o.Status == "Approved");
+            var totalClearedOrderCount = totalOrderItems.Count(o => o.Status == "Cleared");
 
             var clubHostRooms = await _clubHostRepo.GetAllRooms() ?? new List<ClubHostRoom>();
             var clubHostCount = clubHostRooms.Count;
             var clubHostOngoingCount = clubHostRooms.Count(r => r.isActive == "Ongoing");
             var clubHostNotStartedCount = clubHostRooms.Count(r => r.isActive == "NotStarted");
             var clubHostExpiredCount = clubHostRooms.Count(r => r.isActive != "Ongoing" && r.isActive != "NotStarted");
+            var dueReturnCount = await _repo.DueReturnCount();
 
+            if(role.Name=="Librarian")
+            {
+                return new DashboradDTO
+                {
+                    Name = $"{user.Firstname} {user.Lastname}",
+                    RoleName = role.Name,
+                    CartCount = cartCount,
+                    PendingOrders = totalPendingOrderCount,
+                    ApprovedRecords = totalApprovedOrderCount,
+                    ClearedRecords = totalClearedOrderCount,
+                    ClubHostCount = clubHostCount,
+                    CLubHostOngoingCount = clubHostOngoingCount,
+                    CLubHostNotYetStartedCount = clubHostNotStartedCount,
+                    CLubHostExpiredCount = clubHostExpiredCount,
+                    DueReturnCount = dueReturnCount
+                };
+            }
             return new DashboradDTO
             {
                 Name = $"{user.Firstname} {user.Lastname}",
@@ -171,7 +194,8 @@ namespace BookNest.Services
                 ClubHostCount = clubHostCount,
                 CLubHostOngoingCount = clubHostOngoingCount,
                 CLubHostNotYetStartedCount = clubHostNotStartedCount,
-                CLubHostExpiredCount = clubHostExpiredCount
+                CLubHostExpiredCount = clubHostExpiredCount,    
+                DueReturnCount = dueReturnCount
             };
         }
 

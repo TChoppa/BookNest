@@ -12,5 +12,6 @@ namespace BookNest.Interfaces
         public Task<User?> GetUserByUsernamePassword(string userName, byte[] passwordHash, byte[] passwordSalt);
         public  Task<bool> AddUser(User user);
         public Task<bool> EditPasssword(User editedUser);
+        public Task<int> DueReturnCount();
     }
 }

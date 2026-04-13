@@ -18,6 +18,9 @@ namespace BookNest.Interfaces
         public Task DeleteOrderItem(int orderItemId);
         public  Task<Order> UpdateOrder(Order order);
         public Task UpdateOrderItem(OrderItem orderItem);
+        public Task<(List<(OrderItem oi, Order o)> data, int totalCount)>
+    GetOverdueNotClearedOrders(int page, int pageSize, string? search);
+        public Task<List<OrderItem>> GetAllOrderItems();
     }
         
 }

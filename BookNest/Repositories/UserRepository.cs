@@ -49,5 +49,17 @@ namespace BookNest.Repositories
              var result = _dbContext.SaveChanges();
             return result>0;
         }
+        public async Task<int> DueReturnCount()
+        {
+            return await _dbContext.OrderItems
+        .Join(_dbContext.Orders,
+              oi => oi.OrderId,
+              o => o.OrderId,
+              (oi, o) => new { oi, o })
+        .Where(x => x.oi.Status != "Cleared"
+                    && x.o.ReturnDate.HasValue
+                    && x.o.ReturnDate < DateTime.UtcNow)
+        .CountAsync();
+        }
     }
 }

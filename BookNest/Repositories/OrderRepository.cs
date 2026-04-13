@@ -36,6 +36,10 @@ namespace BookNest.Repositories
         {
             return await _dbContext.OrderItems.Where(x => x.OrderId == orderId).ToListAsync();
         }
+        public async Task<List<OrderItem>> GetAllOrderItems()
+        {
+            return await _dbContext.OrderItems.ToListAsync();
+        }
 
         public async Task<OrderItem> GetOrderItemById(int orderItemId)
         {
@@ -99,6 +103,43 @@ namespace BookNest.Repositories
                     throw;
                 }
             }
+        }
+
+        public async Task<(List<(OrderItem oi, Order o)> data, int totalCount)>
+    GetOverdueNotClearedOrders(int page, int pageSize, string? search)
+        {
+            var query = from oi in _dbContext.OrderItems
+                        join o in _dbContext.Orders
+                            on oi.OrderId equals o.OrderId
+                        where oi.Status != "Cleared"
+                              && o.ReturnDate.HasValue
+                              && o.ReturnDate < DateTime.UtcNow
+                        select new { oi, o };
+
+            // 🔍 Search
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(x =>
+                    (x.oi.Title ?? "").Contains(search) ||
+                    (x.o.OrderCode ?? "").Contains(search) ||
+                    (x.o.Username ?? "").Contains(search)
+                );
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var data = await query
+                .OrderByDescending(x => x.o.OrderDate)
+                .Skip((Math.Max(1, page) - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // convert anonymous → tuple
+            var result = data.Select(x => (x.oi, x.o)).ToList();
+
+            return (result, totalCount);
         }
 
     }

@@ -1,11 +1,13 @@
-﻿using System;
-using System.Linq;
-using BookNest.DatabaseContext;
+﻿using BookNest.DatabaseContext;
 using BookNest.DTO;
 using BookNest.Interfaces;
 using BookNest.IServices;
 using BookNest.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.ComponentModel;
+using System.Linq;
 
 namespace BookNest.Services
 {
@@ -156,6 +158,62 @@ namespace BookNest.Services
             return (itemDtos, total);
         }
 
+        public async Task<(List<OrderIItemDTO> data, int totalCount)>
+    GetOverdueNotClearedOrders(int page, int pageSize, string? search)
+        {
+            var (rawData, totalCount) = await _orderRepo
+                .GetOverdueNotClearedOrders(page, pageSize, search);
+
+            var bookIds = rawData.Select(x => x.oi.BookId).Distinct().ToList();
+            var books = await _bookRepo.GetMultipleBookByIds(bookIds);
+            var bookLookup = books.ToDictionary(b => b.BookId);
+
+            var result = rawData.Select(x =>
+            {
+                var oi = x.oi;
+                var o = x.o;
+
+                int fineAmount = 0;
+
+                if (o.ReturnDate.HasValue)
+                {
+                    if (oi.ReturnStatus != "Returned")
+                    {
+                        var overdueDays = (DateTime.UtcNow.Date - o.ReturnDate.Value.Date).Days;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
+                    else
+                    {
+                        var overdueDays = (o.ReturnDate.Value.Date - o.OrderDate.Date).Days - 7;
+                        if (overdueDays > 0)
+                            fineAmount = overdueDays * 5;
+                    }
+                }
+
+                var book = bookLookup.TryGetValue(oi.BookId, out var b) ? b : null;
+
+                return new OrderIItemDTO
+                {
+                    OrderItemId = oi.OrderItemId,
+                    OrderId = o.OrderId,
+                    OrderCode = o.OrderCode,
+                    Title = oi.Title,
+                    ImageUrl = oi.ImageUrl,
+                    Quantity = oi.Quantity,
+                    OrderDate = o.OrderDate,
+                    Status = oi.Status,
+                    ReturnDate = o.ReturnDate,
+                    FineAmount = fineAmount,
+                    Action = oi.Action,
+                    ReturnStatus = oi.ReturnStatus,
+                    Username = o.Username,
+                    Year = book?.Year
+                };
+            }).ToList();
+
+            return (result, totalCount);
+        }
 
         public async Task<List<OrderIItemDTO>> GetOrderItemsByUsername(string username)
         {
@@ -302,7 +360,10 @@ namespace BookNest.Services
             return (dtos, total);
         }
 
-
+        public async Task<List<OrderItem>>GetAllOrderItems()
+        {
+            return await _orderRepo.GetAllOrderItems();
+        }
 
         //    public async Task<(List<OrderIItemDTO> orders, int totalCount)> GetOrderItemsByUsername(
         //string username, int page, int pageSize, string? search)

@@ -87,20 +87,43 @@
             <h5><i class="bi bi-emoji-smile"></i> Welcome @Model.Name</h5>
             <p>Role : @Context.Session.GetString("RoleName")</p>
         </div>
+        @if(User.IsInRole("Librarian"))
+        {
+            <div class="bento-item tall">
+                <h5><i class="bi bi-clock-history"></i> Overdue Returns</h5>
+                @*  <p><b>Return Due Count</b></p> *@
+                <p><b style="font-size:4rem; color:gold;">@Model.DueReturnCount</b></p>
+                <a href="@Url.Action("GetOverdueNotClearedOrders", "order")" class="btn btn-primary btn-sm mt-auto">
+                    View Data
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Cart -->
+            <div class="bento-item tall">
+                <h5><i class="bi bi-cart-plus"></i> Cart</h5>
+                <p><b>Your selected items</b></p>
+                <p><b style="font-size:4rem; color:gold;">@Model.CartCount</b></p>
+                <a href="@Url.Action("ViewCart", "CartControllercs")" class="btn btn-primary btn-sm mt-auto">
+                    View Cart
+                </a>
+            </div>
 
-        <!-- Cart -->
-        <div class="bento-item tall">
-            <h5><i class="bi bi-cart-plus"></i> Cart</h5>
-            <p><b>Your selected items</b></p>
-            <p><b style="font-size:4rem; color:gold;">@Model.CartCount</b></p>
-            <a href="@Url.Action("ViewCart", "CartControllercs")" class="btn btn-primary btn-sm mt-auto">
-                View Cart
-            </a>
-        </div>
-
+        }
+       
+       
         <!-- Orders -->
         <div class="bento-item orders">
-            <h5><i class="bi bi-box-seam"></i> Orders</h5>
+            @if (User.IsInRole("Librarian"))
+            {
+                <h5><i class="bi bi-box-seam"></i> Total Orders</h5>
+            }
+            else
+            {
+                <h5><i class="bi bi-box-seam"></i> Orders</h5>
+            }
+           
 
             <div class="d-flex justify-content-around text-center flex-wrap gap-3">
                 <div>
@@ -120,9 +143,19 @@
             </div>
 
             <br />
-            <a href="@Url.Action("GetOrderByUsername", "Order")" class="btn btn-primary btn-sm mt-auto">
-                View Orders
-            </a>
+            @if(User.IsInRole("Librarian"))
+            {
+                <a href="@Url.Action("GetAllOrders", "Order")" class="btn btn-primary btn-sm mt-auto">
+                    View Orders
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("GetOrderByUsername", "Order")" class="btn btn-primary btn-sm mt-auto">
+                    View Orders
+                </a>
+            }
+            
         </div>
 
         <!-- ClubHost -->
