@@ -21,6 +21,7 @@ namespace BookNest.Interfaces
         public Task<(List<(OrderItem oi, Order o)> data, int totalCount)>
     GetOverdueNotClearedOrders(int page, int pageSize, string? search);
         public Task<List<OrderItem>> GetAllOrderItems();
+        public Task UpdateOrderItemsBulk(List<OrderItem> orderItems);
     }
         
 }

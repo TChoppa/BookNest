@@ -113,12 +113,12 @@ namespace BookNest.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateReturnOrderStatus(int orderItemId)
+        public async Task<IActionResult> UpdateReturnOrderStatus(int orderItemId , decimal fineAmount)
         {
             //var username = HttpContext.Session.GetString("UserName");
             if (orderItemId <= 0)
                 return BadRequest(new { success = false, message = "Invalid order item ID" });
-            var res = await _orderService.UpdateReturnOrderStatus(orderItemId);
+            var res = await _orderService.UpdateReturnOrderStatus(orderItemId,fineAmount);
             if (res == null)
                 return Unauthorized(new { success = false, message = "Order Not Updated" });
             return Ok(new { success = true, order = res });

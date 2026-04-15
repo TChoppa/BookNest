@@ -166,6 +166,7 @@ else
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     (function(){
         const input = document.getElementById('orderSearch');
@@ -407,46 +408,101 @@ else
             });
         });
 
-        
-        $(document).on("dblclick",".return-status-cell",function(){
-            debugger;
-            var cell = $(this).closest(".return-status-cell");
-             if(!cell.attr("title")){
-                        return; // stop execution
-                    }
-            var orderItemId=cell.data("id");
+           $(document).on("dblclick",".return-status-cell",function(){
+
+        var cell = $(this).closest(".return-status-cell");
+
+        // stop if not allowed
+        if(!cell.attr("title")){
+            return;
+        }
+
+        var orderItemId = cell.data("id");
+
+        // 🔥 SHOW POPUP WITH INPUT
+        Swal.fire({
+            title: 'Enter Additional Fine',
+            input: 'number',
+            inputLabel: 'Fine Amount',
+            inputPlaceholder: 'Enter amount...',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+            inputValidator: (value) => {
+                 if (!value) {
+        return 'Please enter fine amount!';
+    }
+
+    // 🔥 check if number
+    if (isNaN(value)) {
+        return 'Only numbers are allowed!';
+    }
+
+    // 🔥 check negative
+    if (Number(value) < 0) {
+        return 'Fine cannot be negative!';
+    }
+
+    // 🔥 optional: max limit
+    if (Number(value) > 10000) {
+        return 'Fine is too large!';
+    }
+
+    return null; // ✅ valid
+            }
+        }).then((result) => {
+
+            // ❌ If user clicks NO → stop execution
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            var fineAmount = result.value;
+
+            // ✅ Continue AJAX
             $.ajax({
-                url:"/Order/UpdateReturnOrderStatus",
-                type:"POST",
-                data:{orderItemId:orderItemId},
-                success:function(response){
-                    debugger;
+                url: "/Order/UpdateReturnOrderStatus",
+                type: "POST",
+                data: {
+                    orderItemId: orderItemId,
+                    fineAmount: fineAmount   // 🔥 passing value
+                },
+                success: function(response){
+                      console.log(response);
                     if(response.success){
+
                         var row = cell.closest("tr");
                         var action = response.order.action;
                         var returnStatus = response.order.returnStatus;
-                        var fineAmount = response.order.fineAmount;
-
+                        var updatedFine = response.order.fineAmount;
                         // Update status
-                        row.find(".status-cell").html(action?'<span class="badge bg-primary">Cleared</span>':'<span class="badge bg-warning text-dark">Pending</span>');
+                        row.find(".status-cell").html(
+                            action
+                            ? '<span class="badge bg-primary">Cleared</span>'
+                            : '<span class="badge bg-warning text-dark">Pending</span>'
+                        );
 
                         // Update return status
                         row.find(".return-status-cell").html(
-                            returnStatus.toLowerCase()==="pending"?'<span class="badge bg-warning text-dark">Pending</span>':'<span class="badge bg-success">Returned</span>'
+                            returnStatus.toLowerCase()==="pending"
+                            ? '<span class="badge bg-warning text-dark">Pending</span>'
+                            : '<span class="badge bg-success">Returned</span>'
+                        );
+                             row.children().eq(9).html(
+                            `<span class="text-danger ps-3">₹${updatedFine}</span>`
                         );
 
-                        checkbox.prop("disabled",true);
                     } else {
-                        alert(response.message);
-                        // checkbox.prop("checked",!checkbox.is(":checked"));
+                        Swal.fire('Error', response.message, 'error');
                     }
                 },
                 error:function(){
-                    alert("Something went wrong");
-                    checkbox.prop("checked",!checkbox.is(":checked"));
+                    Swal.fire('Error', 'Something went wrong', 'error');
                 }
             });
+
         });
+    });
 
         document.addEventListener('DOMContentLoaded',()=>fetchData(input?input.value:'',currentPage));
     })();

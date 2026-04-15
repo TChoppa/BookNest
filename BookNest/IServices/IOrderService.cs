@@ -17,7 +17,7 @@ namespace BookNest.IServices
         public Task<bool> DeleteOrderItemForUser(string username, int orderItemId);
         public Task<UpdateOrderDTO> UpdateOrderStatus(int orderItemId);
 
-        public Task<UpdateOrderDTO> UpdateReturnOrderStatus(int orderItemId);
+        public Task<UpdateOrderDTO> UpdateReturnOrderStatus(int orderItemId, decimal fineAmount);
         public Task<(List<OrderIItemDTO> data, int totalCount)>
     GetOverdueNotClearedOrders(int page, int pageSize, string? search);
         public Task<List<OrderItem>> GetAllOrderItems();
