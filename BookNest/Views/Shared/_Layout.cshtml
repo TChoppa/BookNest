@@ -217,7 +217,19 @@
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "ClubHost")"><i class="bi bi-gear"></i> ClubHost</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("ViewCart", "CartControllercs")"><i class="bi bi-cart"></i> Cart</a></li>
                 <li class="nav-item"><a class="nav-link" href="@Url.Action("GetOrderByUsername", "Order")"><i class="bi bi-box"></i> Orders</a></li>
-               
+                @if (User.IsInRole("Student") || User.IsInRole("Librarian"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Waitlist")">
+                            <i class="bi bi-hourglass-split"></i> @(User.IsInRole("Librarian") ? "Waitlist Offers" : "My Waitlist")
+                            @if (User.IsInRole("Student"))
+                            {
+                                <span id="waitlistNotificationCount" class="badge bg-danger d-none">0</span>
+                            }
+                        </a>
+                    </li>
+                }
+
                 @if (User.IsInRole("Librarian"))
                 {
                     <li class="nav-item"><a class="nav-link" href="@Url.Action("GetAllOrders", "Order")"><i class="bi bi-box"></i> UsersOrderList</a></li>
@@ -252,6 +264,17 @@
 
     </div>
 
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+        <div id="waitlistOfferToast" class="toast" role="status" aria-live="polite" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-book-half text-primary me-2"></i>
+                <strong class="me-auto">BookNest</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">A waitlisted book is available. Open My Waitlist to accept your offer.</div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <script>
@@ -260,6 +283,26 @@
 
         console.log("RoleName from ViewBag: '@ViewBag.RoleName'");
         var currentUrl = window.location.pathname.toLowerCase();
+        @if (User.IsInRole("Student"))
+        {
+            <text>
+                let previousWaitlistOfferCount = 0;
+                function refreshWaitlistNotifications() {
+                    $.get('@Url.Action("GetNotificationCount", "Waitlist")').done(function (count) {
+                        const offerCount = Number(count) || 0;
+                        const badge = $('#waitlistNotificationCount');
+                        badge.text(offerCount);
+                        badge.toggleClass('d-none', offerCount === 0);
+                        if (offerCount > previousWaitlistOfferCount) {
+                            bootstrap.Toast.getOrCreateInstance(document.getElementById('waitlistOfferToast')).show();
+                        }
+                        previousWaitlistOfferCount = offerCount;
+                    });
+                }
+                refreshWaitlistNotifications();
+                window.setInterval(refreshWaitlistNotifications, 15000);
+            </text>
+        }
 
         $('#sidebar .nav-link').each(function () {
 

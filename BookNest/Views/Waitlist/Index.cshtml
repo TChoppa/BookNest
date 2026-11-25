@@ -1,0 +1,146 @@
+@using BookNest.DTO
+@model List<BookWaitlistEntryDto>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isLibrarian = (bool)(ViewBag.IsLibrarian ?? false);
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model == null || Model.Count == 0)
+        {
+            <p class="mb-0">@(isLibrarian ? "There are no active waitlist offers." : "You have no waitlist entries yet.")</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            @if (isLibrarian)
+                            {
+                                <th>Student</th>
+                            }
+                            <th>Book</th>
+                            <th>Queue status</th>
+                            @if (!isLibrarian)
+                            {
+                                <th>Position</th>
+                            }
+                            <th>Offer expires</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model)
+                        {
+                            <tr>
+                                @if (isLibrarian)
+                                {
+                                    <td>@entry.Username</td>
+                                }
+                                <td>@entry.Title</td>
+                                <td>
+                                    @if (entry.Status == "Offered")
+                                    {
+                                        <span class="badge bg-info text-dark">Available — accept to claim</span>
+                                    }
+                                    else if (entry.Status == "Accepted")
+                                    {
+                                        <span class="badge bg-success">Accepted — awaiting collection</span>
+                                    }
+                                    else if (entry.Status == "Waiting")
+                                    {
+                                        <span class="badge bg-warning text-dark">Waiting</span>
+                                    }
+                                    else if (entry.Status == "Collected")
+                                    {
+                                        <span class="badge bg-primary">Collected</span>
+                                    }
+                                    else if (entry.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@entry.Status</span>
+                                    }
+                                </td>
+                                @if (!isLibrarian)
+                                {
+                                    <td>@(entry.Position?.ToString() ?? "—")</td>
+                                }
+                                <td>@(entry.ExpiresAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                                @if (isLibrarian)
+                                {
+                                    <td>
+                                        @if (entry.Status == "Accepted")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-primary mark-collected" data-id="@entry.WaitlistId">Mark collected</button>
+                                        }
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        @if (entry.Status == "Offered")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-success accept-offer" data-id="@entry.WaitlistId">Accept offer</button>
+                                        }
+                                        @if (entry.Status == "Waiting" || entry.Status == "Offered" || entry.Status == "Accepted")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger cancel-entry" data-id="@entry.WaitlistId">Cancel</button>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on("click", ".cancel-entry", function () {
+            const button = $(this);
+            if (!confirm("Cancel this waitlist entry? If a book was offered to you, it will be passed to the next student.")) {
+                return;
+            }
+
+            button.prop("disabled", true);
+            $.post("/Waitlist/Cancel", { waitlistId: button.data("id") })
+                .done(function (response) {
+                    alert(response.message);
+                    window.location.reload();
+                })
+                .fail(function (xhr) {
+                    alert(xhr.responseJSON?.message || "Could not cancel this entry.");
+                    button.prop("disabled", false);
+                });
+        });
+
+        $(document).on("click", ".accept-offer", function () {
+            const button = $(this);
+            $.post("/Waitlist/Accept", { waitlistId: button.data("id") })
+                .done(function (response) {
+                    alert(response.message);
+                    window.location.reload();
+                })
+                .fail(function (xhr) {
+                    alert(xhr.responseJSON?.message || "Could not accept this offer.");
+                });
+        });
+
+        $(document).on("click", ".mark-collected", function () {
+            const button = $(this);
+            $.post("/Waitlist/MarkCollected", { waitlistId: button.data("id") })
+                .done(function () { window.location.reload(); })
+                .fail(function (xhr) {
+                    alert(xhr.responseJSON?.message || "Could not record collection.");
+                });
+        });
+    </script>
+}

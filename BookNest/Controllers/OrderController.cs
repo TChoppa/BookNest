@@ -1,5 +1,6 @@
 ﻿using BookNest.IServices;
 using BookNest.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookNest.Controllers
@@ -101,6 +102,7 @@ namespace BookNest.Controllers
             return Ok(new { success = true });
         }
         [HttpPost]
+        [Authorize(Roles = "Librarian")]
         public async Task<IActionResult> UpdateOrderStatus(int orderItemId)
         {
             //var username = HttpContext.Session.GetString("UserName");
@@ -113,6 +115,7 @@ namespace BookNest.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Librarian")]
         public async Task<IActionResult> UpdateReturnOrderStatus(int orderItemId , decimal fineAmount)
         {
             //var username = HttpContext.Session.GetString("UserName");

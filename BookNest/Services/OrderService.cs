@@ -16,11 +16,13 @@ namespace BookNest.Services
         private readonly IOrderRepository _orderRepo;
         private readonly ICartRepository _cartRepo;
         private readonly IBookRepository _bookRepo;
-        public OrderService(IOrderRepository orderRepository, ICartRepository cartRepository , IBookRepository bookRepository)
+        private readonly IBookWaitlistService _waitlistService;
+        public OrderService(IOrderRepository orderRepository, ICartRepository cartRepository, IBookRepository bookRepository, IBookWaitlistService waitlistService)
         {
             _orderRepo = orderRepository;
             _cartRepo = cartRepository;
             _bookRepo = bookRepository;
+            _waitlistService = waitlistService;
         }
 
         public async Task<string> ConfirmOrder(string username)
@@ -403,13 +405,21 @@ namespace BookNest.Services
         {
             var orderItem = await _orderRepo.GetOrderItemById(orderItemId);
             if (orderItem == null) return null;
-            //var order = await _orderRepo.GetOrderById(orderItem.OrderId);
-            //if (order == null) return null;
+            if (orderItem.ReturnStatus == "Returned")
+            {
+                return new UpdateOrderDTO
+                {
+                    FineAmount = orderItem.FineAmount,
+                    Action = orderItem.Action,
+                    ReturnStatus = orderItem.ReturnStatus
+                };
+            }
+
             orderItem.Status = "Cleared";
             orderItem.ReturnStatus = "Returned";
             orderItem.FineAmount += fineAmount;
             await _orderRepo.UpdateOrderItem(orderItem);
-          
+
             var book = await _bookRepo.GetBookByIds(orderItem.BookId);
 
             if (book != null)
@@ -420,6 +430,7 @@ namespace BookNest.Services
                     book.AvailableQuantity = 0; // safety
 
                 await _cartRepo.UpdateBook(book);
+                await _waitlistService.OfferAvailableCopiesAsync(book.BookId);
             }
             var updateOrder = new UpdateOrderDTO
             {

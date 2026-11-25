@@ -367,6 +367,7 @@
                                      data-available="${book.availableQuantity}">
 
                                     <button class="btn add-btn ${book.cartQty > 0 ? 'd-none' : ''}" ${book.availableQuantity <= 0 ? 'disabled' : ''}>${book.availableQuantity <= 0 ? 'OUT' : 'ADD'}</button>
+                                    ${canJoinWaitlist && book.availableQuantity <= 0 ? '<button class="btn btn-warning waitlist-btn" data-book-id="' + book.bookId + '">Join queue</button>' : ''}
 
                                     <div class="qty-controls ${book.cartQty > 0 ? '' : 'd-none'}">
                                         <button class="btn minus">−</button>
@@ -411,6 +412,16 @@
         });
 
             let cart = {};
+            const canJoinWaitlist = @(User.IsInRole("Student").ToString().ToLower());
+
+            $(document).on("click", ".waitlist-btn", function () {
+                const button = $(this);
+                button.prop("disabled", true);
+                $.post("/Waitlist/Join", { bookId: button.data("book-id") })
+                    .done(function (response) { alert(response.message); })
+                    .fail(function (xhr) { alert(xhr.responseJSON?.message || "Could not join the waitlist."); })
+                    .always(function () { button.prop("disabled", false); });
+            });
 
             // Prevent handling clicks on disabled add buttons
             $(document).on("click", ".add-btn", function () {

@@ -62,6 +62,48 @@ namespace BookNest.Migrations
                     b.ToTable("Books");
                 });
 
+            modelBuilder.Entity("BookNest.Models.BookWaitlistEntry", b =>
+                {
+                    b.Property<int>("WaitlistId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WaitlistId"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CollectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("OfferedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("WaitlistId");
+
+                    b.HasIndex("BookId", "Status", "JoinedAt");
+
+                    b.HasIndex("Username", "BookId", "Status");
+
+                    b.ToTable("BookWaitlistEntries");
+                });
+
             modelBuilder.Entity("BookNest.Models.Cart", b =>
                 {
                     b.Property<int>("CartId")

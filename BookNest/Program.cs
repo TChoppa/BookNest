@@ -26,6 +26,13 @@ namespace BookNest
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IClubHostService, ClubHostService>();
             builder.Services.AddScoped<IClubHostRepository, ClubHostRepository>();
+            builder.Services.AddScoped<IBookWaitlistService, BookWaitlistService>();
+            builder.Services.AddOptions<WaitlistOptions>()
+                .Bind(builder.Configuration.GetSection("Waitlist"))
+                .Validate(options => options.OfferDurationHours > 0, "Waitlist offer duration must be greater than zero.")
+                .Validate(options => options.ExpiryCheckIntervalSeconds > 0, "Waitlist expiry interval must be greater than zero.")
+                .ValidateOnStart();
+            builder.Services.AddHostedService<WaitlistExpiryWorker>();
             builder.Services.AddScoped<CartService>();
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -19,6 +19,7 @@
             public DbSet<ClubHostRoom> ClubHostRooms { get; set; }
             public DbSet<ClubHostMember> ClubHostMembers { get; set; }
             public DbSet<ClubHostAttachment> ClubHostAttachments { get; set; }
+            public DbSet<BookWaitlistEntry> BookWaitlistEntries { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +43,17 @@
                     .WithMany(r => r.Attachments)
                     .HasForeignKey(a => a.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                modelBuilder.Entity<BookWaitlistEntry>()
+                    .Property(entry => entry.Username)
+                    .HasMaxLength(256);
+                modelBuilder.Entity<BookWaitlistEntry>()
+                    .Property(entry => entry.Status)
+                    .HasMaxLength(32);
+                modelBuilder.Entity<BookWaitlistEntry>()
+                    .HasIndex(entry => new { entry.BookId, entry.Status, entry.JoinedAt });
+                modelBuilder.Entity<BookWaitlistEntry>()
+                    .HasIndex(entry => new { entry.Username, entry.BookId, entry.Status });
         }
 
 
